@@ -1,0 +1,59 @@
+<div class="auth-container">
+  <div class="left-panel">
+    <div class="logo">
+      <span class="icon">🏛</span> Civix
+    </div>
+    <h1>Digital Civic Engagement Platform</h1>
+    <p class="subtitle">Civix enables citizens to engage in local governance through petitions, voting, and tracking officials' responses. Join our platform to make your voice heard and drive positive change in your community.</p>
+
+    <div class="feature">
+      <span class="feature-icon">📝</span>
+      <div>
+        <strong>Create and Sign Petitions</strong>
+        <p>Easily create petitions for issues you care about and gather support from your community.</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <span class="feature-icon">🗳</span>
+      <div>
+        <strong>Participate in Public Polls</strong>
+        <p>Vote on local issues and see real-time results of community sentiment.</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <span class="feature-icon">✅</span>
+      <div>
+        <strong>Track Official Responses</strong>
+        <p>See how local officials respond to community concerns and track progress on issues.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="form-box">
+      <h2>Welcome to Civix</h2>
+      <p class="form-subtitle">Join our platform to make your voice heard in local governance.</p>
+
+      <div class="tabs">
+        <span class="tab active">Login</span>
+        <span class="tab" routerLink="/register">Register</span>
+      </div>
+
+      <form (ngSubmit)="onSubmit()">
+        <label>Email</label>
+        <input type="email" [(ngModel)]="email" name="email" placeholder="your@email.com" required />
+
+        <label>Password</label>
+        <input type="password" [(ngModel)]="password" name="password" placeholder="••••••••" required />
+
+        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+        <button type="submit">Sign In</button>
+      </form>
+
+      <p class="switch-text">Don't have an account? <a routerLink="/register">Register now</a></p>
+    </div>
+  </div>
+</div>

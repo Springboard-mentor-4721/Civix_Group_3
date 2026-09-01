@@ -1,0 +1,25 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-icon">🏛</div>
+      <h1>Civix</h1>
+    </div>
+
+    <div class="status-box" *ngIf="status === 'loading'">
+      <div class="spinner"></div>
+      <p>Verifying your email...</p>
+    </div>
+
+    <div class="status-box" *ngIf="status === 'success'">
+      <div class="icon success">✅</div>
+      <p>Your email has been verified successfully!</p>
+      <a routerLink="/login" class="link-btn">Go to Login</a>
+    </div>
+
+    <div class="status-box" *ngIf="status === 'error'">
+      <div class="icon error">⚠</div>
+      <p>{{ errorMessage }}</p>
+      <a routerLink="/login" class="link-btn">Back to Login</a>
+    </div>
+  </div>
+</div>

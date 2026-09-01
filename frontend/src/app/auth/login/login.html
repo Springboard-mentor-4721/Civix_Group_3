@@ -1,0 +1,60 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-icon">🏛</div>
+      <h1>Civix</h1>
+      <p>Digital Civic Engagement Platform</p>
+    </div>
+
+    <div class="tabs">
+      <span class="tab active">Sign In</span>
+      <span class="tab" routerLink="/register">Register</span>
+    </div>
+
+    <form (ngSubmit)="onSubmit()">
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" [(ngModel)]="email" name="email" placeholder="your@email.com" required />
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input type="password" [(ngModel)]="password" name="password" placeholder="Enter your password" required />
+      </div>
+
+      <p class="error" *ngIf="errorMessage">⚠ {{ errorMessage }}</p>
+
+      <button type="submit" [disabled]="loading">
+        {{ loading ? 'Signing in...' : 'Sign In' }}
+      </button>
+      <p class="forgot-link"><a routerLink="/forgot-password">Forgot your password?</a></p>
+    </form>
+
+    <p class="switch-text">New to Civix? <a routerLink="/register">Create an account</a></p>
+  </div>
+
+  <div class="side-panel">
+    <h2>Make your voice heard</h2>
+    <div class="point">
+      <span class="dot"></span>
+      <div>
+        <strong>Create & Sign Petitions</strong>
+        <p>Rally your community around the issues that matter.</p>
+      </div>
+    </div>
+    <div class="point">
+      <span class="dot"></span>
+      <div>
+        <strong>Vote in Public Polls</strong>
+        <p>Share your opinion and see real-time sentiment.</p>
+      </div>
+    </div>
+    <div class="point">
+      <span class="dot"></span>
+      <div>
+        <strong>Track Official Responses</strong>
+        <p>Hold local leaders accountable to their community.</p>
+      </div>
+    </div>
+  </div>
+</div>

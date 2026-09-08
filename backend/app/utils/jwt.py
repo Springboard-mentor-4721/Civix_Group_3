@@ -7,9 +7,11 @@ from fastapi import HTTPException, status
 load_dotenv()
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "civix_default_jwt_secret_key_2026_change_in_production")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+
+if not SECRET_KEY:
+    raise RuntimeError("JWT_SECRET_KEY is not set in .env — server cannot start without it.")
 
 _credentials_exception = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -22,6 +24,15 @@ def create_access_token(user_id: int, role: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=EXPIRE_MINUTES)
     payload = {"sub": str(user_id), "role": role, "exp": expire}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def is_token_expired(token: str) -> bool:
+    """Returns True if token is expired or invalid — used for session cleanup."""
+    try:
+        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return False
+    except JWTError:
+        return True
 
 
 def decode_access_token(token: str) -> dict:

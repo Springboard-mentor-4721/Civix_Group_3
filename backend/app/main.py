@@ -5,16 +5,15 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import OperationalError
-from dotenv import load_dotenv
+
 from app.database import engine, Base
 from app.routes.auth import router as auth_router
 from app.routes.petition import router as petition_router
-from app.models.petition import Petition
 
 load_dotenv()
 
-APP_NAME = os.getenv("APP_NAME", "Civix API")
-APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
+APP_NAME     = os.getenv("APP_NAME", "Civix API")
+APP_VERSION  = os.getenv("APP_VERSION", "1.0.0")
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:4200").split(",")]
 
 
@@ -40,7 +39,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=APP_NAME,
     version=APP_VERSION,
-    description="Civix: Digital Civic Engagement & Petition Platform — Milestone 1",
+    description="Civix: Digital Civic Engagement & Petition Platform",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
@@ -63,5 +62,4 @@ def root():
     return {
         "message": "Civix Backend is running",
         "version": APP_VERSION,
-        "milestone": "Milestone 1",
     }

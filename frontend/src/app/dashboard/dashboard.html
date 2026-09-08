@@ -1,80 +1,142 @@
-<div class="app-container">
-  <aside class="sidebar">
-    <div class="logo">🏛 Civix <span class="beta">Beta</span></div>
+<div class="app-layout">
 
-    <div class="user-card">
-      <div class="avatar">{{ userName.charAt(0) }}</div>
-      <div>
-        <div class="user-name">{{ userName }}</div>
-        <div class="user-status">{{ userRole === 'official' ? 'Unverified Official' : 'Citizen' }}</div>
+  <!-- Mobile Header -->
+  <header class="mobile-header">
+    <button class="menu-toggle" (click)="toggleMobileSidebar()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <span class="mobile-brand">CIVIX</span>
+    <div class="mobile-avatar">{{ userName.charAt(0).toUpperCase() }}</div>
+  </header>
+
+  <!-- Backdrop -->
+  <div class="sidebar-backdrop" *ngIf="mobileSidebarOpen" (click)="toggleMobileSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.mobile-open]="mobileSidebarOpen">
+
+    <!-- Brand -->
+    <div class="sb-brand">
+      <div class="sb-wordmark">CIVIX</div>
+      <div class="sb-slogan">Your Voice. Your City.</div>
+      <button class="sb-close" (click)="toggleMobileSidebar()">✕</button>
+    </div>
+
+    <!-- User Card -->
+    <div class="sb-user">
+      <div class="sb-avatar">{{ userName.charAt(0).toUpperCase() }}</div>
+      <div class="sb-user-info">
+        <span class="sb-name">{{ userName }}</span>
+        <span class="sb-role">{{ userRole === 'official' ? '🏛 Official' : '👤 Citizen' }}</span>
+        <span class="sb-loc">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          {{ userLocation }}
+        </span>
       </div>
     </div>
-    <div class="user-location">📍 {{ userLocation }}</div>
-    <div class="user-email">{{ userEmail }}</div>
 
-    <nav class="nav-links">
-      <a class="nav-item active">🏠 Dashboard</a>
-      <a class="nav-item">📋 Petitions</a>
-      <a class="nav-item">🗳 Polls</a>
-      <a class="nav-item">👤 Officials</a>
-      <a class="nav-item">📊 Reports</a>
-      <a class="nav-item">⚙️ Settings</a>
+    <!-- Nav -->
+    <nav class="sb-nav">
+      <div class="sb-section-label">Main</div>
+
+      <a class="sb-link" [class.active]="activeNav === 'overview'" (click)="setNav('overview')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Overview</span>
+      </a>
+
+      <a class="sb-link" [class.active]="activeNav === 'petitions'" (click)="setNav('petitions')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Petitions</span>
+        <span class="sb-badge coming">Soon</span>
+      </a>
+
+      <a class="sb-link" [class.active]="activeNav === 'polls'" (click)="setNav('polls')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+        <span>Polls & Ballots</span>
+        <span class="sb-badge coming">Soon</span>
+      </a>
+
+      <a class="sb-link" [class.active]="activeNav === 'officials'" (click)="setNav('officials')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Officials</span>
+        <span class="sb-badge coming">Soon</span>
+      </a>
+
+      <div class="sb-section-label">Insights</div>
+
+      <a class="sb-link" [class.active]="activeNav === 'analytics'" (click)="setNav('analytics')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Analytics</span>
+        <span class="sb-badge coming">Soon</span>
+      </a>
+
+      <div class="sb-section-label">Account</div>
+
+      <a class="sb-link" [class.active]="activeNav === 'settings'" (click)="setNav('settings')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+        <span class="sb-badge coming">Soon</span>
+      </a>
     </nav>
 
-    <div class="nav-bottom">
-      <a class="nav-item">❓ Help &amp; Support</a>
-      <a class="nav-item" (click)="logout()">↪ Sign Out</a>
+    <!-- Sidebar Footer -->
+    <div class="sb-footer">
+      <button class="sb-logout" (click)="logout()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>Sign Out</span>
+      </button>
     </div>
   </aside>
 
-  <main class="main-content">
+  <!-- Main Area -->
+  <div class="main-area">
+    <!-- Top Bar -->
     <header class="top-bar">
-      <div></div>
-      <div class="top-bar-right">🔔 {{ userName }}</div>
+      <div class="top-bar-left">
+        <h1 class="page-title">{{ getPageTitle() }}</h1>
+      </div>
+      <div class="top-bar-right">
+        <div class="tb-location">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          {{ userLocation }}
+        </div>
+        <div class="tb-user" (click)="toggleUserDropdown()">
+          <div class="tb-avatar">{{ userName.charAt(0).toUpperCase() }}</div>
+          <span>{{ userName }}</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+
+          <div class="tb-dropdown" *ngIf="userDropdownOpen">
+            <div class="tbd-info">
+              <strong>{{ userName }}</strong>
+              <span>{{ userEmail }}</span>
+              <span class="tbd-role">{{ userRole === 'official' ? 'Official' : 'Citizen' }}</span>
+            </div>
+            <div class="tbd-divider"></div>
+            <button class="tbd-item logout" (click)="logout()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
     </header>
 
-    <div class="welcome-banner">
-      <h2>Welcome back, {{ userName }}!</h2>
-      <p>See what's happening in your community and make your voice heard.</p>
-    </div>
+    <!-- Empty Content -->
+    <main class="main-content">
+      <div class="coming-soon-state">
+        <div class="cs-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/>
+            <path d="M4 10v11"/><path d="M20 10v11"/>
+            <path d="M8 14v4"/><path d="M12 14v4"/><path d="M16 14v4"/>
+          </svg>
+        </div>
+        <h2>Dashboard coming soon</h2>
+        <p>We're building something great. Features will appear here as they're ready.</p>
+      </div>
+    </main>
+  </div>
 
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-header"><span>My Petitions</span> 📝</div>
-        <div class="stat-value">0</div>
-        <div class="stat-label">petitions</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-header"><span>Successful Petitions</span> ✅</div>
-        <div class="stat-value">0</div>
-        <div class="stat-label">or under review</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-header"><span>Polls Created</span> 🗳</div>
-        <div class="stat-value">0</div>
-        <div class="stat-label">polls</div>
-      </div>
-    </div>
-
-    <div class="petitions-section">
-      <div class="petitions-header">
-        <h3>Active Petitions Near You</h3>
-        <span class="location-pill">📍 {{ userLocation }}</span>
-      </div>
-
-      <div class="category-filters">
-        <span *ngFor="let cat of categories"
-              class="category-pill"
-              [class.active]="cat === selectedCategory"
-              (click)="selectCategory(cat)">
-          {{ cat }}
-        </span>
-      </div>
-
-      <div class="empty-state">
-        <p>No petitions found with the current filters.</p>
-        <button (click)="selectCategory('All Categories')">Clear Filters</button>
-      </div>
-    </div>
-  </main>
 </div>

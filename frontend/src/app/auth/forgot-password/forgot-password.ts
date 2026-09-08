@@ -24,15 +24,15 @@ export class ForgotPassword {
     this.errorMessage = '';
     this.message = '';
     this.loading = true;
-    this.authService.forgotPassword(this.email).subscribe({
+    this.authService.forgotPassword(this.email.trim()).subscribe({
       next: (res) => {
         this.loading = false;
         this.submitted = true;
-        this.message = 'If an account exists with that email, a password reset link has been sent.';
+        this.message = res.message || 'If an account exists with this email, a password reset link has been sent.';
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = err.error?.detail || 'Something went wrong. Please try again.';
+        this.errorMessage = err.error?.detail || err.error?.message || 'Something went wrong. Please try again.';
       }
     });
   }

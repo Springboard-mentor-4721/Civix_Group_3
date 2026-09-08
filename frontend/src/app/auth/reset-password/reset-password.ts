@@ -15,8 +15,9 @@ export class ResetPassword implements OnInit {
   token: string = '';
   newPassword: string = '';
   confirmPassword: string = '';
+  showNewPassword: boolean = false;
+  showConfirmPassword: boolean = false;
   errorMessage: string = '';
-  message: string = '';
   loading: boolean = false;
   submitted: boolean = false;
   tokenMissing: boolean = false;
@@ -36,8 +37,16 @@ export class ResetPassword implements OnInit {
     });
   }
 
+  toggleNewPassword() { this.showNewPassword = !this.showNewPassword; }
+  toggleConfirmPassword() { this.showConfirmPassword = !this.showConfirmPassword; }
+
   onSubmit() {
     this.errorMessage = '';
+
+    if (this.newPassword.length < 8) {
+      this.errorMessage = 'Password must be at least 8 characters.';
+      return;
+    }
 
     if (this.newPassword !== this.confirmPassword) {
       this.errorMessage = 'Passwords do not match.';
@@ -45,15 +54,16 @@ export class ResetPassword implements OnInit {
     }
 
     this.loading = true;
+
     this.authService.resetPassword(this.token, this.newPassword).subscribe({
-      next: (res) => {
+      next: () => {
         this.loading = false;
         this.submitted = true;
         setTimeout(() => this.router.navigate(['/login']), 2500);
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = err.error?.detail || 'Reset link may be invalid or expired.';
+        this.errorMessage = err.error?.detail || err.error?.message || 'Reset link may be invalid or expired.';
       }
     });
   }

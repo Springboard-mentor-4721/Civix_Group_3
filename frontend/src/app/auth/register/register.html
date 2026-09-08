@@ -1,81 +1,248 @@
-<div class="auth-wrapper">
-  <div class="side-panel">
-    <h2>Join your community</h2>
-    <div class="point">
-      <span class="dot"></span>
-      <div>
-        <strong>Citizens & Officials</strong>
-        <p>Register as either to start engaging with local governance.</p>
+<div class="auth-root">
+
+  <!-- Navbar -->
+  <nav class="auth-navbar">
+    <div class="nb-brand">
+      <div class="nb-wordmark">
+        <span class="nb-name">CIVIX</span>
+        <span class="nb-slogan">Your Voice. Your City.</span>
       </div>
     </div>
-    <div class="point">
-      <span class="dot"></span>
-      <div>
-        <strong>Location-based</strong>
-        <p>See petitions and polls relevant to your area.</p>
+    <div class="nb-links">
+      <a href="#" class="nb-link">How It Works</a>
+      <a href="#" class="nb-link">About</a>
+      <a href="#" class="nb-link">Contact</a>
+      <a routerLink="/login" class="nb-cta">Sign In</a>
+    </div>
+  </nav>
+
+  <!-- Body -->
+  <div class="auth-body">
+
+    <!-- Left Panel -->
+    <div class="auth-left">
+      <div class="al-orb1"></div>
+      <div class="al-orb2"></div>
+      <div class="al-orb3"></div>
+      <div class="al-inner">
+
+        <!-- SVG Illustration -->
+        <svg class="al-illustration" viewBox="0 0 380 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Ground glow -->
+          <ellipse cx="190" cy="210" rx="150" ry="28" fill="rgba(0,0,0,0.12)"/>
+          <!-- Background buildings -->
+          <rect x="10" y="130" width="32" height="90" rx="3" fill="rgba(255,255,255,0.12)"/>
+          <rect x="52" y="108" width="44" height="112" rx="3" fill="rgba(255,255,255,0.15)"/>
+          <rect x="106" y="140" width="28" height="80" rx="3" fill="rgba(255,255,255,0.1)"/>
+          <rect x="244" y="136" width="32" height="84" rx="3" fill="rgba(255,255,255,0.1)"/>
+          <rect x="286" y="112" width="44" height="108" rx="3" fill="rgba(255,255,255,0.15)"/>
+          <rect x="340" y="134" width="28" height="86" rx="3" fill="rgba(255,255,255,0.12)"/>
+          <!-- Ground line -->
+          <rect x="0" y="218" width="380" height="2" rx="1" fill="rgba(255,255,255,0.2)"/>
+          <!-- Central civic hall -->
+          <rect x="148" y="82" width="84" height="138" rx="5" fill="rgba(255,255,255,0.18)"/>
+          <rect x="156" y="66" width="68" height="18" rx="3" fill="rgba(255,255,255,0.25)"/>
+          <polygon points="190,40 156,66 224,66" fill="rgba(255,255,255,0.3)"/>
+          <!-- Columns -->
+          <rect x="158" y="152" width="8" height="68" rx="2" fill="rgba(0,0,0,0.1)"/>
+          <rect x="174" y="152" width="8" height="68" rx="2" fill="rgba(0,0,0,0.1)"/>
+          <rect x="198" y="152" width="8" height="68" rx="2" fill="rgba(0,0,0,0.1)"/>
+          <rect x="214" y="152" width="8" height="68" rx="2" fill="rgba(0,0,0,0.1)"/>
+          <!-- Door -->
+          <rect x="178" y="178" width="24" height="42" rx="3" fill="rgba(0,0,0,0.15)"/>
+          <!-- Windows -->
+          <rect x="158" y="98" width="16" height="14" rx="2" fill="rgba(251,191,36,0.6)"/>
+          <rect x="182" y="98" width="16" height="14" rx="2" fill="rgba(251,191,36,0.6)"/>
+          <rect x="206" y="98" width="16" height="14" rx="2" fill="rgba(251,191,36,0.6)"/>
+          <rect x="158" y="124" width="16" height="14" rx="2" fill="rgba(255,255,255,0.3)"/>
+          <rect x="206" y="124" width="16" height="14" rx="2" fill="rgba(255,255,255,0.3)"/>
+          <!-- Floating card 1 -->
+          <rect x="4" y="36" width="96" height="44" rx="8" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+          <circle cx="22" cy="54" r="8" fill="rgba(251,191,36,0.7)"/>
+          <rect x="36" y="48" width="52" height="5" rx="2" fill="rgba(255,255,255,0.5)"/>
+          <rect x="36" y="58" width="36" height="4" rx="2" fill="rgba(255,255,255,0.25)"/>
+          <rect x="10" y="70" width="82" height="3" rx="1" fill="rgba(255,255,255,0.2)"/>
+          <!-- Floating card 2 -->
+          <rect x="280" y="28" width="96" height="44" rx="8" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+          <circle cx="298" cy="46" r="8" fill="rgba(255,255,255,0.5)"/>
+          <rect x="312" y="40" width="52" height="5" rx="2" fill="rgba(255,255,255,0.5)"/>
+          <rect x="312" y="50" width="36" height="4" rx="2" fill="rgba(255,255,255,0.25)"/>
+          <rect x="286" y="62" width="82" height="3" rx="1" fill="rgba(255,255,255,0.2)"/>
+          <!-- Connection dots -->
+          <circle cx="96" cy="210" r="4" fill="rgba(255,255,255,0.4)"/>
+          <circle cx="284" cy="210" r="4" fill="rgba(255,255,255,0.4)"/>
+          <line x1="96" y1="210" x2="190" y2="195" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="4 3"/>
+          <line x1="284" y1="210" x2="190" y2="195" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="4 3"/>
+        </svg>
+
+        <div class="al-chip">
+          <span class="al-chip-dot"></span>
+          Civic Tech Platform
+        </div>
+        <h1 class="al-title">Your Voice.<br><span class="grad">Your City.</span></h1>
+        <p class="al-sub">Sign petitions, vote on local issues, and hold your representatives accountable — all in one place.</p>
       </div>
     </div>
-    <div class="point">
-      <span class="dot"></span>
-      <div>
-        <strong>Transparent & Secure</strong>
-        <p>Your data is protected, your voice is amplified.</p>
-      </div>
-    </div>
-  </div>
 
-  <div class="auth-card">
-    <div class="brand">
-      <div class="brand-icon">🏛</div>
-      <h1>Civix</h1>
-      <p>Digital Civic Engagement Platform</p>
-    </div>
+    <!-- Right Panel -->
+    <div class="auth-right">
+      <div class="auth-card">
 
-    <div class="tabs">
-      <span class="tab" routerLink="/login">Sign In</span>
-      <span class="tab active">Register</span>
-    </div>
+        <div class="ac-tabs">
+          <a class="ac-tab" routerLink="/login">Sign In</a>
+          <a class="ac-tab active">Register</a>
+        </div>
 
-    <form (ngSubmit)="onSubmit()">
-      <div class="field">
-        <label>Full Name</label>
-        <input type="text" [(ngModel)]="name" name="name" placeholder="Jane Doe" required />
-      </div>
+        <div class="ac-heading">
+          <h2>Create your account</h2>
+          <p>Join thousands of citizens making a difference.</p>
+        </div>
 
-      <div class="field">
-        <label>Email Address</label>
-        <input type="email" [(ngModel)]="email" name="email" placeholder="your@email.com" required />
-      </div>
+        <div class="ac-error" *ngIf="errorMessage">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>{{ errorMessage }}</span>
+        </div>
 
-      <div class="field">
-        <label>Password</label>
-        <input type="password" [(ngModel)]="password" name="password" placeholder="Create a password" required />
-      </div>
+        <div class="ac-success" *ngIf="successMessage">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <span>{{ successMessage }}</span>
+        </div>
 
-      <div class="field">
-        <label>Location</label>
-        <input type="text" [(ngModel)]="location" name="location" placeholder="Portland, OR" required />
-      </div>
+        <form (ngSubmit)="onSubmit()" class="ac-form">
 
-      <div class="field">
-        <label>Register as</label>
-        <div class="role-toggle">
-          <label class="role-option" [class.selected]="role === 'citizen'">
-            <input type="radio" [(ngModel)]="role" name="role" value="citizen" /> Citizen
-          </label>
-          <label class="role-option" [class.selected]="role === 'official'">
-            <input type="radio" [(ngModel)]="role" name="role" value="official" /> Official
-          </label>
+          <!-- Role -->
+          <div class="form-group">
+            <label>Account Type</label>
+            <div class="role-grid">
+              <div class="role-card" [class.active]="role==='citizen'" (click)="setRole('citizen')">
+                <div class="role-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+                <div class="role-text"><strong>Citizen</strong><span>Vote & sign petitions</span></div>
+                <span class="role-check" *ngIf="role==='citizen'">✓</span>
+              </div>
+              <div class="role-card" [class.active]="role==='official'" (click)="setRole('official')">
+                <div class="role-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                </div>
+                <div class="role-text"><strong>Official</strong><span>Respond & verify</span></div>
+                <span class="role-check" *ngIf="role==='official'">✓</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Name + Email -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Name</label>
+              <div class="inp-wrap">
+                <span class="inp-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                <input type="text" [(ngModel)]="name" name="name" placeholder="Your full name" required autocomplete="name"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <div class="inp-wrap">
+                <span class="inp-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+                <input type="email" [(ngModel)]="email" name="email" placeholder="Your email" required autocomplete="email"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Password + Confirm -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Password</label>
+              <div class="inp-wrap">
+                <span class="inp-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                <input [type]="showPassword?'text':'password'" [(ngModel)]="password" name="password" placeholder="Min 8 chars" required autocomplete="new-password"/>
+                <button type="button" class="vis-toggle" (click)="togglePassword()" tabindex="-1">
+                  <svg *ngIf="!showPassword" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg *ngIf="showPassword" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                </button>
+              </div>
+              <div class="strength-row" *ngIf="password">
+                <div class="s-bars">
+                  <div class="s-bar" [class.filled]="getPasswordStrength().score>=1" [ngClass]="getPasswordStrength().colorClass"></div>
+                  <div class="s-bar" [class.filled]="getPasswordStrength().score>=2" [ngClass]="getPasswordStrength().colorClass"></div>
+                  <div class="s-bar" [class.filled]="getPasswordStrength().score>=3" [ngClass]="getPasswordStrength().colorClass"></div>
+                </div>
+                <span class="s-label" [ngClass]="getPasswordStrength().colorClass">{{getPasswordStrength().text}}</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Confirm Password</label>
+              <div class="inp-wrap">
+                <span class="inp-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                <input [type]="showConfirmPassword?'text':'password'" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="Re-enter password" required autocomplete="new-password"/>
+                <button type="button" class="vis-toggle" (click)="toggleConfirmPassword()" tabindex="-1">
+                  <svg *ngIf="!showConfirmPassword" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg *ngIf="showConfirmPassword" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                </button>
+              </div>
+              <div class="match-hint" *ngIf="confirmPassword">
+                <span class="match-ok" *ngIf="password===confirmPassword">✓ Passwords match</span>
+                <span class="match-no" *ngIf="password!==confirmPassword">✗ Don't match</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Location -->
+          <div class="form-group">
+            <div class="label-row">
+              <label>City / Jurisdiction</label>
+              <button type="button" class="loc-btn" (click)="autoFetchLocation()" [disabled]="fetchingLocation">
+                <svg *ngIf="!fetchingLocation" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+                <span *ngIf="fetchingLocation" class="mini-spinner"></span>
+                <span>{{ fetchingLocation ? 'Detecting...' : 'Auto-Detect' }}</span>
+              </button>
+            </div>
+            <div class="inp-wrap">
+              <span class="inp-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+              <input type="text" [(ngModel)]="location" (input)="onLocationInput()" name="location" placeholder="Search your city or district" required autocomplete="off"/>
+            </div>
+            <div class="loc-dropdown" *ngIf="locationSuggestions.length>0">
+              <div class="loc-item" *ngFor="let s of locationSuggestions" (click)="selectLocation(s)">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>{{ s }}</span>
+              </div>
+            </div>
+            <div class="loc-hint" *ngIf="locationDetectedSuccess">✓ {{ location }}</div>
+          </div>
+
+          <button type="submit" class="ac-submit" [disabled]="loading||!name||!email||!password||!confirmPassword||!location">
+            <span *ngIf="loading" class="spinner"></span>
+            <span>{{ loading ? 'Creating Account...' : 'Create Account' }}</span>
+            <svg *ngIf="!loading" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </form>
+
+        <div class="ac-footer">
+          Already have an account? <a routerLink="/login">Sign in</a>
         </div>
       </div>
-
-      <p class="error" *ngIf="errorMessage">⚠ {{ errorMessage }}</p>
-
-      <button type="submit" [disabled]="loading">
-        {{ loading ? 'Creating account...' : 'Create Account' }}
-      </button>
-    </form>
-
-    <p class="switch-text">Already have an account? <a routerLink="/login">Sign in</a></p>
+    </div>
   </div>
+
+  <!-- Footer -->
+  <footer class="auth-footer">
+    <div class="af-inner">
+      <div class="af-links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Use</a>
+        <a href="#">Contact</a>
+        <a href="#">Help Center</a>
+      </div>
+      <span class="af-copy">© 2026 Civix. All rights reserved.</span>
+    </div>
+  </footer>
+
 </div>

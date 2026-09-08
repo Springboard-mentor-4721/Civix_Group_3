@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Auth, UserResponse } from '../auth/auth';
 
 @Component({
   selector: 'app-dashboard',
@@ -10,35 +11,59 @@ import { Router } from '@angular/router';
   styleUrl: './dashboard.css'
 })
 export class Dashboard implements OnInit {
-  userName: string = '';
-  userLocation: string = '';
-  userRole: string = '';
+  userName: string = 'Civic Member';
+  userLocation: string = 'Civic District';
+  userRole: string = 'citizen';
   userEmail: string = '';
 
-  categories: string[] = ['All Categories', 'Environment', 'Infrastructure', 'Education', 'Public Safety', 'Transportation', 'Healthcare', 'Housing'];
-  selectedCategory: string = 'All Categories';
+  activeNav: string = 'overview';
+  mobileSidebarOpen: boolean = false;
+  userDropdownOpen: boolean = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private authService: Auth) {}
 
   ngOnInit() {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      this.userName = user.name;
-      this.userLocation = user.location;
-      this.userRole = user.role;
-      this.userEmail = user.email;
-    } else {
-      this.router.navigate(['/login']);
-    }
+    const user = this.authService.getUser();
+    if (user) this.populateUser(user);
+
+    this.authService.getMe().subscribe({
+      next: (u) => this.populateUser(u),
+      error: () => {}
+    });
   }
 
-  selectCategory(cat: string) {
-    this.selectedCategory = cat;
+  private populateUser(user: UserResponse) {
+    this.userName = user.name || user.email?.split('@')[0] || 'Citizen';
+    this.userLocation = user.location || 'Civic District';
+    this.userRole = user.role || 'citizen';
+    this.userEmail = user.email || '';
   }
+
+  setNav(nav: string) {
+    this.activeNav = nav;
+    this.mobileSidebarOpen = false;
+  }
+
+  getPageTitle(): string {
+    const titles: Record<string, string> = {
+      overview: 'Overview',
+      petitions: 'Petitions',
+      polls: 'Polls & Ballots',
+      officials: 'Officials Directory',
+      analytics: 'Analytics',
+      settings: 'Settings'
+    };
+    return titles[this.activeNav] || 'Dashboard';
+  }
+
+  toggleMobileSidebar() { this.mobileSidebarOpen = !this.mobileSidebarOpen; }
+
+  toggleUserDropdown() { this.userDropdownOpen = !this.userDropdownOpen; }
 
   logout() {
-    localStorage.removeItem('user');
-    this.router.navigate(['/login']);
+    this.authService.logout().subscribe({
+      next: () => this.router.navigate(['/login']),
+      error: () => this.router.navigate(['/login'])
+    });
   }
 }

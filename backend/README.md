@@ -57,12 +57,18 @@ http://127.0.0.1:8000/docs
 
 ## API Endpoints
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/` | None | Health check |
-| POST | `/api/auth/register` | None | Register citizen or official |
-| POST | `/api/auth/login` | None | Login and receive JWT |
-| GET | `/api/auth/me` | Bearer JWT | Get current user profile |
+| Method | Endpoint                        | Auth       | Description                                |
+| ------ | ------------------------------- | ---------- | ------------------------------------------ |
+| POST   | `/api/auth/register`            | None       | Register citizen or official               |
+| POST   | `/api/auth/login`               | None       | Login and receive JWT                      |
+| POST   | `/api/auth/logout`              | Bearer JWT | Logout and invalidate current token        |
+| GET    | `/api/auth/me`                  | Bearer JWT | Get current user profile                   |
+| PUT    | `/api/auth/me`                  | Bearer JWT | Update user name or location               |
+| GET    | `/api/auth/verify-email`        | None       | Verify user email using verification token |
+| POST   | `/api/auth/resend-verification` | None       | Resend email verification link             |
+| POST   | `/api/auth/forgot-password`     | None       | Request password reset link                |
+| POST   | `/api/auth/reset-password`      | None       | Reset password using reset token           |
+
 
 ## Authentication Flow
 

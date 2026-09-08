@@ -34,12 +34,4 @@ class User(Base):
     )
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
-
-    # Email verification
-    email_verified_at             = Column(DateTime, nullable=True)
-    verification_token_hash       = Column(String(255), nullable=True)
-    verification_token_expires_at = Column(DateTime, nullable=True)
-
-    # Password reset
-    reset_token_hash       = Column(String(255), nullable=True)
-    reset_token_expires_at = Column(DateTime, nullable=True)
+    email_verified_at = Column(DateTime, nullable=True)

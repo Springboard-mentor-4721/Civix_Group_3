@@ -21,11 +21,28 @@ def _send(to_email: str, subject: str, body: str) -> None:
     msg["To"]      = to_email
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
+    if not SMTP_HOST or not SMTP_USERNAME:
+        print(f"\n[EMAIL DEV SIMULATION]\nTo: {to_email}\nSubject: {subject}\n{body}\n")
+        return
 
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
         server.starttls()
         server.login(SMTP_USERNAME, SMTP_PASSWORD)
         server.sendmail(FROM_EMAIL, to_email, msg.as_string())
+    try:
+        msg = MIMEMultipart()
+        msg["From"]    = f"{FROM_NAME} <{FROM_EMAIL or 'noreply@civix.org'}>"
+        msg["To"]      = to_email
+        msg["Subject"] = subject
+        msg.attach(MIMEText(body, "plain"))
+
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USERNAME, SMTP_PASSWORD or "")
+            server.sendmail(FROM_EMAIL or "noreply@civix.org", to_email, msg.as_string())
+    except Exception as e:
+        print(f"⚠️ SMTP error ({e}). Dev simulation fallback:")
+        print(f"\n[EMAIL DEV SIMULATION]\nTo: {to_email}\nSubject: {subject}\n{body}\n")
 
 
 def send_verification_email(to_email: str, token: str) -> None:

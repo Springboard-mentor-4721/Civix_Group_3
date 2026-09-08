@@ -1,6 +1,5 @@
 import os
 import secrets
-import hashlib
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -27,11 +26,10 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 _bearer_scheme = HTTPBearer()
 _blacklisted_tokens: set[str] = set()
 
+# In-memory token stores: token -> (user_id, expires_at)
+_verification_tokens: dict[str, tuple[int, datetime]] = {}
+_reset_tokens: dict[str, tuple[int, datetime]] = {}
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
-
-def _hash_token(token: str) -> str:
-    return hashlib.sha256(token.encode()).hexdigest()
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
@@ -126,16 +124,19 @@ def update_me(payload: UserUpdate, current_user: User = Depends(get_current_user
 
 @router.get("/verify-email")
 def verify_email(token: str, db: Session = Depends(get_db)):
-    token_hash = _hash_token(token)
-    user = db.query(User).filter(User.verification_token_hash == token_hash).first()
+    entry = _verification_tokens.get(token)
+    if not entry:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification token.")
+    user_id, expires_at = entry
+    if _utcnow() > expires_at:
+        _verification_tokens.pop(token, None)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification token.")
+    user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification token.")
-    if user.verification_token_expires_at < _utcnow():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification token.")
-    user.email_verified_at             = _utcnow()
-    user.verification_token_hash       = None
-    user.verification_token_expires_at = None
+    user.email_verified_at = _utcnow()
     db.commit()
+    _verification_tokens.pop(token, None)
     return {"message": "Email verified successfully."}
 
 
@@ -146,9 +147,7 @@ def resend_verification(payload: ResendVerificationRequest, db: Session = Depend
     if not user or user.email_verified_at is not None:
         return {"message": _GENERIC}
     token = secrets.token_urlsafe(32)
-    user.verification_token_hash       = _hash_token(token)
-    user.verification_token_expires_at = _utcnow() + timedelta(minutes=EMAIL_VERIFICATION_EXPIRE_MINUTES)
-    db.commit()
+    _verification_tokens[token] = (user.id, _utcnow() + timedelta(minutes=EMAIL_VERIFICATION_EXPIRE_MINUTES))
     print(f"[DEV] Verification token for {user.email}: {token}")
     send_verification_email(user.email, token)
     return {"message": _GENERIC}
@@ -161,24 +160,25 @@ def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db
     if not user:
         return {"message": _GENERIC}
     token = secrets.token_urlsafe(32)
-    user.reset_token_hash       = _hash_token(token)
-    user.reset_token_expires_at = _utcnow() + timedelta(minutes=PASSWORD_RESET_EXPIRE_MINUTES)
-    db.commit()
-    print(f"Password reset token for {user.email}: {token}")
+    _reset_tokens[token] = (user.id, _utcnow() + timedelta(minutes=PASSWORD_RESET_EXPIRE_MINUTES))
+    print(f"[DEV] Password reset token for {user.email}: {token}")
     send_password_reset_email(user.email, token)
     return {"message": _GENERIC}
 
 
 @router.post("/reset-password")
 def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
-    token_hash = _hash_token(payload.token)
-    user = db.query(User).filter(User.reset_token_hash == token_hash).first()
+    entry = _reset_tokens.get(payload.token)
+    if not entry:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token.")
+    user_id, expires_at = entry
+    if _utcnow() > expires_at:
+        _reset_tokens.pop(payload.token, None)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token.")
+    user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token.")
-    if user.reset_token_expires_at < _utcnow():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token.")
-    user.password             = hash_password(payload.new_password)
-    user.reset_token_hash     = None
-    user.reset_token_expires_at = None
+    user.password = hash_password(payload.new_password)
     db.commit()
+    _reset_tokens.pop(payload.token, None)
     return {"message": "Password reset successfully."}

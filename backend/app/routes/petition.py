@@ -272,30 +272,30 @@ def sign_petition(
 
 # ── Withdraw Signature ─────────────────────────────────────────────────────────
 
-@router.delete("/{petition_id}/sign", response_model=SignatureResponse)
-def withdraw_signature(
-    petition_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    petition = db.query(Petition).filter(Petition.id == petition_id).first()
-    if not petition:
-        raise HTTPException(status_code=404, detail="Petition not found")
+# @router.delete("/{petition_id}/sign", response_model=SignatureResponse)
+# def withdraw_signature(
+#     petition_id: int,
+#     current_user: User = Depends(get_current_user),
+#     db: Session = Depends(get_db),
+# ):
+#     petition = db.query(Petition).filter(Petition.id == petition_id).first()
+#     if not petition:
+#         raise HTTPException(status_code=404, detail="Petition not found")
 
-    signature = db.query(Signature).filter(
-        Signature.petition_id == petition_id,
-        Signature.user_id == current_user.id,
-    ).first()
-    if not signature:
-        raise HTTPException(status_code=404, detail="You have not signed this petition")
+#     signature = db.query(Signature).filter(
+#         Signature.petition_id == petition_id,
+#         Signature.user_id == current_user.id,
+#     ).first()
+#     if not signature:
+#         raise HTTPException(status_code=404, detail="You have not signed this petition")
 
-    db.delete(signature)
-    db.commit()
+#     db.delete(signature)
+#     db.commit()
 
-    signature_count = _get_signature_count(db, petition_id)
+#     signature_count = _get_signature_count(db, petition_id)
 
-    if petition.status == PetitionStatus.under_review and signature_count < petition.signature_goal:
-        petition.status = PetitionStatus.active
-        db.commit()
+#     if petition.status == PetitionStatus.under_review and signature_count < petition.signature_goal:
+#         petition.status = PetitionStatus.active
+#         db.commit()
 
-    return {"signature_count": signature_count, "has_signed": False}
+#     return {"signature_count": signature_count, "has_signed": False}

@@ -1,0 +1,111 @@
+<div class="page-root">
+  <nav class="page-nav">
+    <a [routerLink]="isLoggedIn ? '/dashboard' : '/login'" class="pn-brand">
+      <span class="pn-name">CIVIX</span>
+      <span class="pn-slogan">Your Voice. Your City.</span>
+    </a>
+    <div class="pn-links">
+      <a routerLink="/how-it-works" class="pn-link">How It Works</a>
+      <a routerLink="/about" class="pn-link">About</a>
+      <a routerLink="/contact" class="pn-link" style="color:#0f172a; font-weight:700;">Contact</a>
+      <a routerLink="/help-center" class="pn-link">Help Center</a>
+      <a *ngIf="!isLoggedIn" routerLink="/login" class="pn-cta">Sign In</a>
+      <a *ngIf="isLoggedIn" routerLink="/dashboard" class="pn-cta">Dashboard &rarr;</a>
+    </div>
+  </nav>
+
+  <div class="page-hero">
+    <div class="ph-chip"><span class="ph-chip-dot"></span> Get In Touch</div>
+    <h1>Contact Us</h1>
+    <p>Have a question, feedback, or need support? We'd love to hear from you.</p>
+  </div>
+
+  <div class="page-content">
+
+    <!-- Info cards -->
+    <div class="help-grid" style="margin-bottom:24px">
+      <div class="help-card">
+        <div class="hc-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <h3>Email Us</h3>
+        <p>support&#64;civix.org<br>We reply within 24 hours.</p>
+      </div>
+      <div class="help-card">
+        <div class="hc-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h3>Support Hours</h3>
+        <p>Monday &ndash; Friday<br>9:00 AM &ndash; 6:00 PM IST</p>
+      </div>
+      <div class="help-card">
+        <div class="hc-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <h3>Location</h3>
+        <p>Infosys Campus<br>Bengaluru, India</p>
+      </div>
+    </div>
+
+    <!-- Contact Form -->
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        Send a Message
+      </h2>
+
+      <div *ngIf="!submitted">
+        <form (ngSubmit)="onSubmit()" class="contact-grid">
+          <div class="cf-group">
+            <label>Full Name</label>
+            <input type="text" [(ngModel)]="name" name="name" placeholder="Your name" required />
+          </div>
+          <div class="cf-group">
+            <label>Email Address</label>
+            <input type="email" [(ngModel)]="email" name="email" placeholder="your@email.com" required />
+          </div>
+          <div class="cf-group full">
+            <label>Subject</label>
+            <select [(ngModel)]="subject" name="subject" required>
+              <option value="" disabled selected>Select a topic</option>
+              <option>General Inquiry</option>
+              <option>Account Issue</option>
+              <option>Petition Support</option>
+              <option>Official Verification</option>
+              <option>Bug Report</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="cf-group full">
+            <label>Message</label>
+            <textarea [(ngModel)]="message" name="message" placeholder="Describe your issue or question..." required></textarea>
+          </div>
+          <div class="cf-group full">
+            <button type="submit" class="cf-submit" [disabled]="!name||!email||!subject||!message">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Send Message
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="cf-success" *ngIf="submitted">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Message sent! We'll get back to you within 24 hours.
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="page-footer">
+    <div class="pf-links">
+      <a routerLink="/privacy-policy">Privacy Policy</a>
+      <a routerLink="/terms-of-use">Terms of Use</a>
+      <a routerLink="/how-it-works">How It Works</a>
+      <a routerLink="/about">About</a>
+      <a routerLink="/contact">Contact</a>
+      <a routerLink="/help-center">Help Center</a>
+    </div>
+    <span class="pf-copy">&copy; 2026 Civix. All rights reserved.</span>
+  </footer>
+</div>

@@ -1,0 +1,715 @@
+<div class="petitions-root">
+
+  <!-- 1. LIST VIEW (Default Directory) -->
+  <div class="pet-view-container" *ngIf="viewMode === 'list'">
+
+    <!-- Header Banner -->
+    <div class="pet-header">
+      <div class="pet-header-left">
+        <div class="pet-badge-pill">
+          <span class="pbp-dot"></span>
+          Civic Petitions Hub
+        </div>
+        <h1 class="pet-title">Empower Your Community</h1>
+        <p class="pet-subtitle">
+          Propose policy changes, gather verified resident support, and engage directly with local authorities.
+        </p>
+      </div>
+      <div class="pet-header-right">
+        <button class="btn-create-pet" (click)="openCreatePage()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          <span>Start a Petition</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Metric Stats -->
+    <div class="pet-stats-grid">
+      <div class="pstat-card" (click)="setTab('explore')">
+        <div class="pstat-icon bg-teal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="pstat-content">
+          <span class="pstat-num">{{ totalCount }}</span>
+          <span class="pstat-label">Total Petitions</span>
+        </div>
+      </div>
+
+      <div class="pstat-card" (click)="setTab('mine')">
+        <div class="pstat-icon bg-blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="pstat-content">
+          <span class="pstat-num">{{ myPetitions.length }}</span>
+          <span class="pstat-label">My Petitions ({{ myActiveCount }} active)</span>
+        </div>
+      </div>
+
+      <div class="pstat-card" (click)="setTab('signed')">
+        <div class="pstat-icon bg-emerald">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="pstat-content">
+          <span class="pstat-num">{{ signedPetitions.length }}</span>
+          <span class="pstat-label">Signed by Me</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Tabs & Toolbar -->
+    <div class="pet-controls">
+      <div class="pet-tabs">
+        <button class="ptab-btn" [class.active]="activeTab === 'explore'" (click)="setTab('explore')">
+          <span>Explore All</span>
+          <span class="ptab-count">{{ petitions.length }}</span>
+        </button>
+        <button class="ptab-btn" [class.active]="activeTab === 'mine'" (click)="setTab('mine')">
+          <span>Created by Me</span>
+          <span class="ptab-count">{{ myPetitions.length }}</span>
+        </button>
+        <button class="ptab-btn" [class.active]="activeTab === 'signed'" (click)="setTab('signed')">
+          <span>Signed by Me</span>
+          <span class="ptab-count">{{ signedPetitions.length }}</span>
+        </button>
+      </div>
+
+      <!-- Search & Status Row -->
+      <div class="pet-filter-row">
+        <div class="pet-search-wrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            placeholder="Search by title, keyword, or locality..."
+          />
+          <button *ngIf="searchQuery" class="clear-search" (click)="searchQuery=''">&times;</button>
+        </div>
+
+        <div class="pet-status-select-wrap" *ngIf="activeTab === 'explore'">
+          <select [(ngModel)]="selectedStatus" (change)="onStatusSelect(selectedStatus)">
+            <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Expandable Category Bar (with >>> / <<< toggle) -->
+      <div class="pet-categories-container" *ngIf="activeTab === 'explore'">
+        <div class="pet-categories-bar">
+          <button
+            *ngFor="let cat of visibleCategories"
+            class="cat-chip"
+            [class.active]="selectedCategory === cat"
+            (click)="onCategorySelect(cat)"
+          >
+            {{ cat }}
+          </button>
+
+          <!-- Expand / Collapse Button (>>> / <<<) -->
+          <button class="cat-expand-btn" (click)="toggleCategoriesExpanded()" title="Toggle categories">
+            <span *ngIf="!categoriesExpanded">&gt;&gt;&gt; More</span>
+            <span *ngIf="categoriesExpanded">&lt;&lt;&lt; Less</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Petitions Grid Content -->
+    <div class="pet-content-area">
+
+      <!-- Loading State -->
+      <div class="pet-loading" *ngIf="loading">
+        <div class="pet-spinner"></div>
+        <p>Loading petitions...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div class="pet-empty" *ngIf="!loading && displayedPetitions.length === 0">
+        <div class="pe-icon">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <h3 *ngIf="activeTab === 'explore'">No Petitions Found</h3>
+        <h3 *ngIf="activeTab === 'mine'">You haven't created any petitions yet</h3>
+        <h3 *ngIf="activeTab === 'signed'">You haven't signed any petitions yet</h3>
+        <p *ngIf="activeTab === 'explore'">Try adjusting your search filters or create a new petition to get started.</p>
+        <p *ngIf="activeTab === 'mine'">Have an idea to improve your neighborhood or city? Rally support by starting a petition.</p>
+        <p *ngIf="activeTab === 'signed'">Explore active petitions in your community and make your voice count.</p>
+        <button class="btn-create-pet" (click)="openCreatePage()" *ngIf="activeTab !== 'signed'">
+          <span>+ Start a Petition</span>
+        </button>
+        <button class="btn-explore" (click)="setTab('explore')" *ngIf="activeTab === 'signed'">
+          <span>Browse Petitions</span>
+        </button>
+      </div>
+
+      <!-- Cards Grid -->
+      <div class="pet-grid" *ngIf="!loading && displayedPetitions.length > 0">
+        <div
+          class="pet-card"
+          *ngFor="let p of displayedPetitions"
+          (click)="openDetailPage(p, $event)"
+        >
+          <!-- Card Top: Category, Status & 3-Dot Menu -->
+          <div class="pcard-top">
+            <span class="pcard-cat" [ngClass]="getCategoryColor(p.category)">
+              {{ p.category }}
+            </span>
+
+            <div class="pcard-top-right">
+              <span class="pcard-creator-tag" *ngIf="p.creator_id === currentUserId">You</span>
+              <span class="pcard-status" [ngClass]="'status-' + p.status">
+                <span class="status-dot"></span>
+                {{ getStatusLabel(p.status) }}
+              </span>
+
+              <!-- 3-Dot Menu Button -->
+              <div class="pcard-menu-wrap" (click)="$event.stopPropagation()">
+                <button class="btn-dot-menu" (click)="toggleCardMenu(p.id, $event)" title="Options">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/>
+                  </svg>
+                </button>
+
+                <!-- 3-Dot Dropdown Popover -->
+                <div class="pcard-dropdown" *ngIf="activeMenuPetitionId === p.id">
+                  <button class="pcd-item" (click)="sharePetition(p, $event)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    <span>Share Link</span>
+                  </button>
+
+                  <button
+                    *ngIf="p.creator_id === currentUserId && p.status !== 'closed'"
+                    class="pcd-item"
+                    (click)="openEditPage(p, $event)"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    <span>Edit Petition</span>
+                  </button>
+
+                  <div class="pcd-divider" *ngIf="p.creator_id === currentUserId"></div>
+
+                  <button
+                    *ngIf="p.creator_id === currentUserId"
+                    class="pcd-item danger"
+                    (click)="promptDelete(p, $event)"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Title & Location -->
+          <h3 class="pcard-title">{{ p.title }}</h3>
+          
+          <div class="pcard-loc">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>{{ p.location }}</span>
+          </div>
+
+          <!-- Description -->
+          <p class="pcard-desc">{{ p.description }}</p>
+
+          <!-- Progress Section -->
+          <div class="pcard-progress-wrap">
+            <div class="pcard-pbar-bg">
+              <div
+                class="pcard-pbar-fill"
+                [style.width.%]="getProgressPercentage(p.signature_count, p.signature_goal)"
+                [class.goal-met]="p.signature_count >= p.signature_goal"
+              ></div>
+            </div>
+            <div class="pcard-pbar-meta">
+              <span class="pcard-sig-count">
+                <strong>{{ p.signature_count }}</strong> signed
+              </span>
+              <span class="pcard-sig-goal">
+                Goal: {{ p.signature_goal }} ({{ getProgressPercentage(p.signature_count, p.signature_goal) }}%)
+              </span>
+            </div>
+          </div>
+
+          <!-- Card Footer Actions -->
+          <div class="pcard-footer" (click)="$event.stopPropagation()">
+            <div class="pcard-date">
+              {{ p.created_at | date:'mediumDate' }}
+            </div>
+
+            <div class="pcard-actions">
+              <!-- Sign / Signed Button -->
+              <button
+                *ngIf="p.creator_id !== currentUserId && hasUserSigned(p.id)"
+                class="btn-signed"
+                disabled
+              >
+                &#10003; Signed
+              </button>
+
+              <button
+                *ngIf="p.creator_id !== currentUserId && !hasUserSigned(p.id) && p.status === 'active'"
+                class="btn-sign"
+                [disabled]="signingPetitionId === p.id"
+                (click)="signPetition(p, $event)"
+              >
+                <span *ngIf="signingPetitionId === p.id" class="mini-spin"></span>
+                <span>{{ signingPetitionId === p.id ? 'Signing...' : 'Sign Petition' }}</span>
+              </button>
+
+              <span *ngIf="p.creator_id !== currentUserId && !hasUserSigned(p.id) && p.status !== 'active'" class="status-closed-tag">
+                {{ p.status === 'under_review' ? 'Under Review' : 'Closed' }}
+              </span>
+
+              <button class="btn-card-view" (click)="openDetailPage(p, $event)">
+                View &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- 
+       2. START A PETITION (FULL PAGE VIEW - NOT A MODAL)
+        -->
+  <div class="pet-page-container" *ngIf="viewMode === 'create'">
+
+    <!-- Back Navigation Bar -->
+    <div class="page-nav-bar">
+      <button class="btn-back" (click)="backToList()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        <span>Back to Petitions</span>
+      </button>
+      <span class="page-nav-title">New Proposal</span>
+    </div>
+
+    <div class="pet-form-card">
+      <div class="pfc-header">
+        <div class="pfc-badge">Step 1 of 1 &bull; Public Proposal</div>
+        <h2>Start a Community Petition</h2>
+        <p>Draft your proposal with clear demands to rally citizen support and official municipal review.</p>
+      </div>
+
+      <div class="form-error-banner" *ngIf="formErrorMessage">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>{{ formErrorMessage }}</span>
+      </div>
+
+      <form (ngSubmit)="submitCreatePetition()" class="full-page-form">
+        <!-- Title -->
+        <div class="form-block">
+          <div class="flabel-row">
+            <label>Petition Title <span class="req">*</span></label>
+            <span class="char-count">{{ formTitle.length }} / 200</span>
+          </div>
+          <div class="finp-wrap" [class.invalid-wrap]="formSubmitted && !formTitle.trim()">
+            <input
+              type="text"
+              [(ngModel)]="formTitle"
+              name="formTitle"
+              maxlength="200"
+              placeholder="e.g., Install Protected Bike Lanes and Safer Crossings on 5th Avenue"
+              required
+            />
+          </div>
+          <span class="fhint">Write a clear, specific title describing what change is needed.</span>
+          <div class="ferror-msg" *ngIf="formSubmitted && !formTitle.trim()">Petition title is required</div>
+        </div>
+
+        <!-- Category & Location Row -->
+        <div class="form-grid-2">
+          <div class="form-block">
+            <label>Issue Category <span class="req">*</span></label>
+            <div class="finp-wrap">
+              <select [(ngModel)]="formCategory" name="formCategory" required>
+                <option *ngFor="let cat of allCategories.slice(1)" [value]="cat">{{ cat }}</option>
+              </select>
+            </div>
+            <span class="fhint">Helps route this petition to relevant municipal departments.</span>
+          </div>
+
+          <div class="form-block">
+            <div class="flabel-row">
+              <label>City / Jurisdiction <span class="req">*</span></label>
+              <button
+                type="button"
+                class="btn-autoloc-page"
+                (click)="autoDetectLocation()"
+                [disabled]="detectingLocation"
+              >
+                <span *ngIf="detectingLocation" class="mini-spin dark"></span>
+                <span style="display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg> {{ detectingLocation ? 'Detecting...' : 'Auto-Detect' }}</span>
+              </button>
+            </div>
+            <div class="finp-wrap" [class.invalid-wrap]="formSubmitted && !formLocation.trim()">
+              <input
+                type="text"
+                [(ngModel)]="formLocation"
+                name="formLocation"
+                placeholder="e.g., Downtown District, Metro City"
+                required
+              />
+            </div>
+            <span class="fhint">Target locality where this petition applies.</span>
+            <div class="ferror-msg" *ngIf="formSubmitted && !formLocation.trim()">Location is required</div>
+          </div>
+        </div>
+
+        <!-- Signature Goal -->
+        <div class="form-block">
+          <label>Target Signature Goal <span class="req">*</span></label>
+          <div class="finp-wrap" [class.invalid-wrap]="formSubmitted && (!formSignatureGoal || formSignatureGoal <= 0)">
+            <input
+              type="number"
+              [(ngModel)]="formSignatureGoal"
+              name="formSignatureGoal"
+              min="1"
+              max="1000000"
+              placeholder="100"
+              required
+            />
+          </div>
+          <span class="fhint">Number of verified signatures required to submit for official council review.</span>
+          <div class="ferror-msg" *ngIf="formSubmitted && (!formSignatureGoal || formSignatureGoal <= 0)">Valid signature goal is required (min 1)</div>
+        </div>
+
+        <!-- Detailed Description -->
+        <div class="form-block">
+          <label>Detailed Description & Objectives <span class="req">*</span></label>
+          <div class="finp-wrap" [class.invalid-wrap]="formSubmitted && !formDescription.trim()">
+            <textarea
+              [(ngModel)]="formDescription"
+              name="formDescription"
+              rows="7"
+              placeholder="Describe the problem, the impacted neighborhoods, why current measures are insufficient, and the exact steps municipal authorities should take..."
+              required
+            ></textarea>
+          </div>
+          <span class="fhint">Be detailed and respectful. Clear context increases community engagement.</span>
+          <div class="ferror-msg" *ngIf="formSubmitted && !formDescription.trim()">Description is required</div>
+        </div>
+
+        <!-- Submit Row -->
+        <div class="form-actions-row">
+          <button type="button" class="btn-page-cancel" (click)="backToList()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-page-submit" [disabled]="formSubmitting">
+            <span *ngIf="formSubmitting" class="mini-spin"></span>
+            <span>{{ formSubmitting ? 'Publishing Petition...' : 'Publish Petition' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+
+
+  <!-- 
+       3. PETITION DETAILS (FULL PAGE VIEW - NOT A MODAL)
+        -->
+  <div class="pet-page-container" *ngIf="viewMode === 'detail'">
+
+    <!-- Back Navigation Bar -->
+    <div class="page-nav-bar">
+      <button class="btn-back" (click)="backToList()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        <span>Back to Petitions</span>
+      </button>
+
+      <div class="pdetail-nav-actions" *ngIf="selectedPetition">
+        <!-- 3-Dot Menu for Detail Page -->
+        <div class="pcard-menu-wrap" (click)="$event.stopPropagation()">
+          <button class="btn-dot-menu" (click)="toggleCardMenu(selectedPetition.id, $event)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/>
+            </svg>
+          </button>
+
+          <div class="pcard-dropdown right-align" *ngIf="activeMenuPetitionId === selectedPetition.id">
+            <button class="pcd-item" (click)="sharePetition(selectedPetition, $event)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <span>Share Link</span>
+            </button>
+
+            <button
+              *ngIf="selectedPetition.creator_id === currentUserId && selectedPetition.status !== 'closed'"
+              class="pcd-item"
+              (click)="openEditPage(selectedPetition, $event)"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              <span>Edit Petition</span>
+            </button>
+
+            <div class="pcd-divider" *ngIf="selectedPetition.creator_id === currentUserId"></div>
+
+            <button
+              *ngIf="selectedPetition.creator_id === currentUserId"
+              class="pcd-item danger"
+              (click)="promptDelete(selectedPetition, $event)"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+              <span>Delete</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail Content Container -->
+    <div class="pdetail-layout" *ngIf="selectedPetition">
+
+      <!-- Main Column -->
+      <div class="pdetail-main">
+        <div class="pdetail-hero-card">
+          <!-- Tags -->
+          <div class="pdetail-tags">
+            <span class="pcard-cat" [ngClass]="getCategoryColor(selectedPetition.category)">
+              {{ selectedPetition.category }}
+            </span>
+            <span class="pcard-status" [ngClass]="'status-' + selectedPetition.status">
+              <span class="status-dot"></span>
+              {{ getStatusLabel(selectedPetition.status) }}
+            </span>
+            <span class="pcard-creator-tag" *ngIf="selectedPetition.creator_id === currentUserId">Created by You</span>
+          </div>
+
+          <!-- Title -->
+          <h1 class="pdetail-title">{{ selectedPetition.title }}</h1>
+
+          <!-- Meta -->
+          <div class="pdetail-meta">
+            <span class="pmeta-item" style="display:inline-flex;align-items:center;gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg> {{ selectedPetition.location }}</span>
+            <span class="pmeta-item" style="display:inline-flex;align-items:center;gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Published {{ selectedPetition.created_at | date:'longDate' }}</span>
+            <span class="pmeta-item" *ngIf="selectedPetition.updated_at !== selectedPetition.created_at">
+              <span style="display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Updated {{ selectedPetition.updated_at | date:'mediumDate' }}</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Description Card -->
+        <div class="pdetail-card">
+          <h3>About This Petition</h3>
+          <div class="pdetail-desc">
+            {{ selectedPetition.description }}
+          </div>
+        </div>
+
+        <!-- Official Actions Card (Only for Official role) -->
+        <div class="pdetail-card official-card" *ngIf="currentUserRole === 'official'">
+          <div class="ocard-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <h4>Official Administration Panel</h4>
+          </div>
+          <p>As a verified municipal representative, you can update the administrative status of this petition:</p>
+          <div class="ocard-controls">
+            <select [(ngModel)]="selectedOfficialStatus">
+              <option value="active">Active (Constituents can sign)</option>
+              <option value="under_review">Under Review (Council evaluating)</option>
+              <option value="closed">Closed (Resolution issued)</option>
+            </select>
+            <button class="btn-update-status" (click)="updateOfficialStatus(selectedPetition)" [disabled]="updatingStatus">
+              <span *ngIf="updatingStatus" class="mini-spin"></span>
+              <span>{{ updatingStatus ? 'Saving...' : 'Update Status' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar Column: Progress & Sign -->
+      <div class="pdetail-sidebar">
+        <div class="pside-card">
+          <div class="pside-header">
+            <span class="pside-count">{{ selectedPetition.signature_count }}</span>
+            <span class="pside-goal">of {{ selectedPetition.signature_goal }} signatures</span>
+          </div>
+
+          <div class="pside-pbar-bg">
+            <div
+              class="pside-pbar-fill"
+              [style.width.%]="getProgressPercentage(selectedPetition.signature_count, selectedPetition.signature_goal)"
+              [class.goal-met]="selectedPetition.signature_count >= selectedPetition.signature_goal"
+            ></div>
+          </div>
+
+          <div class="pside-pbar-info">
+            <strong>{{ getProgressPercentage(selectedPetition.signature_count, selectedPetition.signature_goal) }}% Completed</strong>
+            <span *ngIf="selectedPetition.signature_count < selectedPetition.signature_goal">
+              {{ selectedPetition.signature_goal - selectedPetition.signature_count }} remaining
+            </span>
+            <span *ngIf="selectedPetition.signature_count >= selectedPetition.signature_goal" style="color:#059669; font-weight:700;">
+              Goal Achieved!
+            </span>
+          </div>
+
+          <!-- Sign / Signed Button -->
+          <div class="pside-action-wrap">
+            <button
+              *ngIf="selectedPetition.creator_id !== currentUserId && hasUserSigned(selectedPetition.id)"
+              class="btn-side-signed"
+              disabled
+            >
+              &#10003; You Signed this Petition
+            </button>
+
+            <button
+              *ngIf="selectedPetition.creator_id !== currentUserId && !hasUserSigned(selectedPetition.id) && selectedPetition.status === 'active'"
+              class="btn-side-sign"
+              [disabled]="signingPetitionId === selectedPetition.id"
+              (click)="signPetition(selectedPetition)"
+            >
+              <span *ngIf="signingPetitionId === selectedPetition.id" class="mini-spin"></span>
+              <span>{{ signingPetitionId === selectedPetition.id ? 'Signing...' : 'Sign this Petition' }}</span>
+            </button>
+
+            <div *ngIf="selectedPetition.creator_id === currentUserId" class="pside-creator-note">
+              <span style="display:inline-flex;align-items:center;gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> You created this petition</span>
+            </div>
+
+            <div *ngIf="selectedPetition.status !== 'active' && !hasUserSigned(selectedPetition.id) && selectedPetition.creator_id !== currentUserId" class="pside-closed-note">
+              This petition is {{ selectedPetition.status === 'under_review' ? 'under council review' : 'closed' }}.
+            </div>
+          </div>
+
+          <!-- Share Button -->
+          <button class="btn-side-share" (click)="sharePetition(selectedPetition)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span>Share with Community</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- 
+       4. EDIT PETITION (FULL PAGE VIEW)
+        -->
+  <div class="pet-page-container" *ngIf="viewMode === 'edit'">
+
+    <div class="page-nav-bar">
+      <button class="btn-back" (click)="backToList()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        <span>Back</span>
+      </button>
+      <span class="page-nav-title">Edit Petition #{{ editingPetitionId }}</span>
+    </div>
+
+    <div class="pet-form-card">
+      <div class="pfc-header">
+        <h2>Edit Petition Details</h2>
+        <p>Modify objectives or location for your community proposal.</p>
+      </div>
+
+      <div class="form-error-banner" *ngIf="formErrorMessage">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>{{ formErrorMessage }}</span>
+      </div>
+
+      <form (ngSubmit)="submitEditPetition()" class="full-page-form">
+        <div class="form-block">
+          <label>Petition Title <span class="req">*</span></label>
+          <div class="finp-wrap" [class.invalid-wrap]="formSubmitted && !formTitle.trim()">
+            <input type="text" [(ngModel)]="formTitle" name="formTitle" maxlength="200" required />
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-block">
+            <label>Category <span class="req">*</span></label>
+            <div class="finp-wrap">
+              <select [(ngModel)]="formCategory" name="formCategory" required>
+                <option *ngFor="let cat of allCategories.slice(1)" [value]="cat">{{ cat }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-block">
+            <label>Location / City <span class="req">*</span></label>
+            <div class="finp-wrap" [class.invalid-wrap]="formSubmitted && !formLocation.trim()">
+              <input type="text" [(ngModel)]="formLocation" name="formLocation" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-block">
+          <label>Signature Goal <span class="req">*</span></label>
+          <div class="finp-wrap">
+            <input type="number" [(ngModel)]="formSignatureGoal" name="formSignatureGoal" min="1" required />
+          </div>
+        </div>
+
+        <div class="form-block">
+          <label>Detailed Description <span class="req">*</span></label>
+          <div class="finp-wrap" [class.invalid-wrap]="formSubmitted && !formDescription.trim()">
+            <textarea [(ngModel)]="formDescription" name="formDescription" rows="7" required></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions-row">
+          <button type="button" class="btn-page-cancel" (click)="backToList()">Cancel</button>
+          <button type="submit" class="btn-page-submit" [disabled]="formSubmitting">
+            <span *ngIf="formSubmitting" class="mini-spin"></span>
+            <span>{{ formSubmitting ? 'Saving Changes...' : 'Save Changes' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+
+
+  <!-- 
+       5. DELETE CONFIRMATION DIALOG / MODAL
+        -->
+  <div class="confirm-modal-backdrop" *ngIf="deleteModalOpen" (click)="cancelDelete()">
+    <div class="confirm-modal-card" (click)="$event.stopPropagation()">
+      <div class="confirm-modal-icon danger">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      </div>
+      <h3>Delete Petition?</h3>
+      <p>
+        Are you sure you want to delete <strong>"{{ petitionToDelete?.title }}"</strong>?
+        This action cannot be undone and will permanently remove all collected signatures.
+      </p>
+      <div class="confirm-modal-actions">
+        <button class="btn-cmodal-cancel" (click)="cancelDelete()" [disabled]="deletingPetition">
+          Cancel
+        </button>
+        <button class="btn-cmodal-danger" (click)="confirmDelete()" [disabled]="deletingPetition">
+          <span *ngIf="deletingPetition" class="mini-spin"></span>
+          <span>{{ deletingPetition ? 'Deleting...' : 'Delete Petition' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 
+       6. FLOATING TOAST NOTIFICATIONS
+        -->
+  <div class="toast-container" *ngIf="toasts.length > 0">
+    <div
+      class="toast-item"
+      *ngFor="let t of toasts"
+      [ngClass]="'toast-' + t.type"
+      (click)="dismissToast(t.id)"
+    >
+      <span class="toast-icon">
+        <svg *ngIf="t.type === 'success'" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <svg *ngIf="t.type === 'error'" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <svg *ngIf="t.type === 'info'" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </span>
+      <span class="toast-text">{{ t.message }}</span>
+      <button class="toast-close" (click)="removeToast(t.id)">&times;</button>
+    </div>
+  </div>
+
+</div>

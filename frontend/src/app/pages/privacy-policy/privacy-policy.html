@@ -1,0 +1,94 @@
+<div class="page-root">
+  <nav class="page-nav">
+    <a [routerLink]="isLoggedIn ? '/dashboard' : '/login'" class="pn-brand">
+      <span class="pn-name">CIVIX</span>
+      <span class="pn-slogan">Your Voice. Your City.</span>
+    </a>
+    <div class="pn-links">
+      <a routerLink="/how-it-works" class="pn-link">How It Works</a>
+      <a routerLink="/about" class="pn-link">About</a>
+      <a routerLink="/contact" class="pn-link">Contact</a>
+      <a routerLink="/help-center" class="pn-link">Help Center</a>
+      <a *ngIf="!isLoggedIn" routerLink="/login" class="pn-cta">Sign In</a>
+      <a *ngIf="isLoggedIn" routerLink="/dashboard" class="pn-cta">Dashboard &rarr;</a>
+    </div>
+  </nav>
+
+  <div class="page-hero">
+    <div class="ph-chip"><span class="ph-chip-dot"></span> Legal</div>
+    <h1>Privacy Policy</h1>
+    <p>How we collect, use, and protect your personal information on the CIVIX platform.</p>
+  </div>
+
+  <div class="page-content">
+
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+        Overview
+      </h2>
+      <p>CIVIX ("we", "our", "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our civic engagement platform.</p>
+      <p>By registering or using CIVIX, you agree to the collection and use of information in accordance with this policy. Last updated: January 2026.</p>
+    </div>
+
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        Information We Collect
+      </h2>
+      <ul>
+        <li>Full name and email address provided during registration</li>
+        <li>Your role (Citizen or Official) and location/jurisdiction</li>
+        <li>Petitions you create, sign, or interact with</li>
+        <li>Polls and ballots you participate in</li>
+        <li>Login activity, session data, and device information</li>
+        <li>Location data (only when you grant permission for auto-detect)</li>
+      </ul>
+    </div>
+
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+        How We Use Your Information
+      </h2>
+      <ul>
+        <li>To create and manage your CIVIX account</li>
+        <li>To enable civic participation &mdash; petitions, polls, and official responses</li>
+        <li>To send email verification and password reset links</li>
+        <li>To enforce platform security (login limits, session management)</li>
+        <li>To improve platform features and user experience</li>
+        <li>To comply with legal obligations</li>
+      </ul>
+    </div>
+
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+        Data Security
+      </h2>
+      <p>We implement industry-standard security measures including bcrypt password hashing, JWT-based authentication, login attempt rate limiting, and session management with a maximum of 2 active devices per account.</p>
+      <p>No method of transmission over the internet is 100% secure. We strive to use commercially acceptable means to protect your data but cannot guarantee absolute security.</p>
+    </div>
+
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+        Contact Us
+      </h2>
+      <p>If you have questions about this Privacy Policy, please contact us at <strong>privacy&#64;civix.org</strong> or visit our <a routerLink="/contact" style="color:#0d9488;font-weight:600;">Contact page</a>.</p>
+    </div>
+
+  </div>
+
+  <footer class="page-footer">
+    <div class="pf-links">
+      <a routerLink="/privacy-policy">Privacy Policy</a>
+      <a routerLink="/terms-of-use">Terms of Use</a>
+      <a routerLink="/how-it-works">How It Works</a>
+      <a routerLink="/about">About</a>
+      <a routerLink="/contact">Contact</a>
+      <a routerLink="/help-center">Help Center</a>
+    </div>
+    <span class="pf-copy">&copy; 2026 Civix. All rights reserved.</span>
+  </footer>
+</div>

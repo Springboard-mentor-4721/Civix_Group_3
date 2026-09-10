@@ -88,6 +88,40 @@ export class Register {
     this.locationDetectedSuccess = true;
   }
 
+  submitted: boolean = false;
+
+  isNameValid(): boolean {
+    return !!this.name && this.name.trim().length >= 2;
+  }
+
+  isEmailValid(): boolean {
+    if (!this.email) return false;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(this.email.trim());
+  }
+
+  isPasswordValid(): boolean {
+    return !!this.password && this.password.length >= 8;
+  }
+
+  isConfirmPasswordValid(): boolean {
+    return !!this.confirmPassword && this.confirmPassword === this.password;
+  }
+
+  isLocationValid(): boolean {
+    return !!this.location && this.location.trim().length >= 2;
+  }
+
+  isFormValid(): boolean {
+    return (
+      this.isNameValid() &&
+      this.isEmailValid() &&
+      this.isPasswordValid() &&
+      this.isConfirmPasswordValid() &&
+      this.isLocationValid()
+    );
+  }
+
   getPasswordStrength(): { text: string; score: number; colorClass: string } {
     if (!this.password) return { text: '', score: 0, colorClass: '' };
     let score = 0;
@@ -102,11 +136,32 @@ export class Register {
   }
 
   onSubmit() {
+    this.submitted = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    if (this.password !== this.confirmPassword) {
+    if (!this.isNameValid()) {
+      this.errorMessage = 'Please enter your full name (minimum 2 characters).';
+      return;
+    }
+
+    if (!this.isEmailValid()) {
+      this.errorMessage = 'Please enter a valid email address.';
+      return;
+    }
+
+    if (!this.isPasswordValid()) {
+      this.errorMessage = 'Password must be at least 8 characters long.';
+      return;
+    }
+
+    if (!this.isConfirmPasswordValid()) {
       this.errorMessage = 'Passwords do not match.';
+      return;
+    }
+
+    if (!this.isLocationValid()) {
+      this.errorMessage = 'Please enter or auto-detect your municipal jurisdiction / city.';
       return;
     }
 

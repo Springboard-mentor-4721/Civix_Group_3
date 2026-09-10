@@ -1,0 +1,99 @@
+<div class="page-root">
+  <nav class="page-nav">
+    <a [routerLink]="isLoggedIn ? '/dashboard' : '/login'" class="pn-brand">
+      <span class="pn-name">CIVIX</span>
+      <span class="pn-slogan">Your Voice. Your City.</span>
+    </a>
+    <div class="pn-links">
+      <a routerLink="/how-it-works" class="pn-link">How It Works</a>
+      <a routerLink="/about" class="pn-link" style="color:#0f172a; font-weight:700;">About</a>
+      <a routerLink="/contact" class="pn-link">Contact</a>
+      <a routerLink="/help-center" class="pn-link">Help Center</a>
+      <a *ngIf="!isLoggedIn" routerLink="/login" class="pn-cta">Sign In</a>
+      <a *ngIf="isLoggedIn" routerLink="/dashboard" class="pn-cta">Dashboard &rarr;</a>
+    </div>
+  </nav>
+
+  <div class="page-hero">
+    <div class="ph-chip"><span class="ph-chip-dot"></span> Our Mission</div>
+    <h1>About CIVIX</h1>
+    <p>Empowering residents and municipal leaders with technology to build responsive, transparent, and thriving communities.</p>
+  </div>
+
+  <div class="page-content">
+
+    <!-- Mission & Vision Card -->
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></span>
+        Our Mission & Vision
+      </h2>
+      <p>Modern civic participation should not be buried behind bureaucratic paperwork or outdated town hall queues. CIVIX was created to democratize municipal engagement by bringing neighborhood petitions, local polling, and direct official dialogue into an accessible digital hub.</p>
+      <p>We believe when citizens have a direct, transparent channel to voice urban concerns&mdash;and when municipal officials have clear, verifiable constituent data,cities become safer, greener, and more responsive.</p>
+    </div>
+
+    <!-- Core Values -->
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+        Core Principles
+      </h2>
+      <ul>
+        <li><strong>Transparency First:</strong> All petitions, signature counts, official responses, and community poll distributions are publicly verifiable.</li>
+        <li><strong>Constituent Integrity:</strong> High-precision location detection and email verification ensure genuine residents shape decisions in their actual jurisdiction.</li>
+        <li><strong>Official Accountability:</strong> Public officials receive structured constituent inputs and provide milestone updates on municipal resolutions.</li>
+        <li><strong>Enterprise Security:</strong> State-of-the-art encryption, native bcrypt security, multi-device session controls, and strict rate-limiting.</li>
+      </ul>
+    </div>
+
+    <!-- Impact Stats -->
+    <div class="help-grid" style="margin-bottom:24px">
+      <div class="help-card" style="text-align:center;">
+        <div class="hc-icon" style="margin:0 auto 12px; background:#f0fdfa; color:#0d9488;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 style="font-size:22px; font-weight:800; color:#0d9488; margin-bottom:4px;">10,000+</h3>
+        <p>Active Citizens Engaged</p>
+      </div>
+
+      <div class="help-card" style="text-align:center;">
+        <div class="hc-icon" style="margin:0 auto 12px; background:#f0fdfa; color:#0d9488;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <h3 style="font-size:22px; font-weight:800; color:#0d9488; margin-bottom:4px;">1,250+</h3>
+        <p>Petitions Created & Reviewed</p>
+      </div>
+
+      <div class="help-card" style="text-align:center;">
+        <div class="hc-icon" style="margin:0 auto 12px; background:#f0fdfa; color:#0d9488;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h3 style="font-size:22px; font-weight:800; color:#0d9488; margin-bottom:4px;">88%</h3>
+        <p>Official Resolution Rate</p>
+      </div>
+    </div>
+
+    <!-- Leadership / Project Story -->
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        Developed For Future Cities
+      </h2>
+      <p>Built with robust modern web technologies including Angular, FastAPI, and MySQL, CIVIX is architected to scale across municipal corporations, smart cities, and university campuses worldwide.</p>
+      <p>Have an inquiry or partnership idea? Reach out to our civic engineering team through our <a routerLink="/contact" style="color:#0d9488; font-weight:700;">Contact page</a>.</p>
+    </div>
+
+  </div>
+
+  <footer class="page-footer">
+    <div class="pf-links">
+      <a routerLink="/privacy-policy">Privacy Policy</a>
+      <a routerLink="/terms-of-use">Terms of Use</a>
+      <a routerLink="/how-it-works">How It Works</a>
+      <a routerLink="/about">About</a>
+      <a routerLink="/contact">Contact</a>
+      <a routerLink="/help-center">Help Center</a>
+    </div>
+    <span class="pf-copy">&copy; 2026 Civix. All rights reserved.</span>
+  </footer>
+</div>

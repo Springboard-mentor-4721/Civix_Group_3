@@ -1,0 +1,100 @@
+<div class="page-root">
+  <nav class="page-nav">
+    <a [routerLink]="isLoggedIn ? '/dashboard' : '/login'" class="pn-brand">
+      <span class="pn-name">CIVIX</span>
+      <span class="pn-slogan">Your Voice. Your City.</span>
+    </a>
+    <div class="pn-links">
+      <a routerLink="/how-it-works" class="pn-link">How It Works</a>
+      <a routerLink="/about" class="pn-link">About</a>
+      <a routerLink="/contact" class="pn-link">Contact</a>
+      <a routerLink="/help-center" class="pn-link">Help Center</a>
+      <a *ngIf="!isLoggedIn" routerLink="/login" class="pn-cta">Sign In</a>
+      <a *ngIf="isLoggedIn" routerLink="/dashboard" class="pn-cta">Dashboard &rarr;</a>
+    </div>
+  </nav>
+
+  <div class="page-hero">
+    <div class="ph-chip"><span class="ph-chip-dot"></span> Legal</div>
+    <h1>Terms of Use</h1>
+    <p>Please read these terms carefully before using the CIVIX platform.</p>
+  </div>
+
+  <div class="page-content">
+
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+        Acceptance of Terms
+      </h2>
+      <p>By accessing or using CIVIX, you agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use the platform. These terms apply to all users &mdash; Citizens and Officials alike.</p>
+    </div>
+
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        User Accounts
+      </h2>
+      <ul>
+        <li>You must provide accurate and complete information during registration</li>
+        <li>You are responsible for maintaining the confidentiality of your account credentials</li>
+        <li>You may not share your account with others or use another person's account</li>
+        <li>A maximum of 2 active sessions are allowed per account at any time</li>
+        <li>Officials must complete identity verification before accessing official features</li>
+        <li>We reserve the right to suspend accounts that violate these terms</li>
+      </ul>
+    </div>
+
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+        Acceptable Use
+      </h2>
+      <p>You agree not to use CIVIX to:</p>
+      <ul>
+        <li>Post false, misleading, or fraudulent petitions or content</li>
+        <li>Harass, threaten, or intimidate other users or officials</li>
+        <li>Attempt to gain unauthorized access to the platform or other accounts</li>
+        <li>Use automated tools to create fake signatures or votes</li>
+        <li>Violate any applicable local, state, or national laws</li>
+        <li>Impersonate government officials or public figures</li>
+      </ul>
+    </div>
+
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+        Petitions & Signatures
+      </h2>
+      <ul>
+        <li>Petitions must be related to genuine civic issues in your jurisdiction</li>
+        <li>Each user may sign a petition only once</li>
+        <li>Petition creators cannot sign their own petitions</li>
+        <li>Petitions that reach their signature goal are moved to "Under Review" status</li>
+        <li>Officials may close petitions after review</li>
+        <li>CIVIX does not guarantee any government action on petitions</li>
+      </ul>
+    </div>
+
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+        Limitation of Liability
+      </h2>
+      <p>CIVIX is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the platform. CIVIX does not guarantee that petitions will result in any government action or policy change.</p>
+    </div>
+
+  </div>
+
+  <footer class="page-footer">
+    <div class="pf-links">
+      <a routerLink="/privacy-policy">Privacy Policy</a>
+      <a routerLink="/terms-of-use">Terms of Use</a>
+      <a routerLink="/how-it-works">How It Works</a>
+      <a routerLink="/about">About</a>
+      <a routerLink="/contact">Contact</a>
+      <a routerLink="/help-center">Help Center</a>
+    </div>
+    <span class="pf-copy">&copy; 2026 Civix. All rights reserved.</span>
+  </footer>
+</div>

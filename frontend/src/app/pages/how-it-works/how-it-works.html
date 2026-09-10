@@ -1,0 +1,104 @@
+<div class="page-root">
+  <nav class="page-nav">
+    <a [routerLink]="isLoggedIn ? '/dashboard' : '/login'" class="pn-brand">
+      <span class="pn-name">CIVIX</span>
+      <span class="pn-slogan">Your Voice. Your City.</span>
+    </a>
+    <div class="pn-links">
+      <a routerLink="/how-it-works" class="pn-link" style="color:#0f172a; font-weight:700;">How It Works</a>
+      <a routerLink="/about" class="pn-link">About</a>
+      <a routerLink="/contact" class="pn-link">Contact</a>
+      <a routerLink="/help-center" class="pn-link">Help Center</a>
+      <a *ngIf="!isLoggedIn" routerLink="/login" class="pn-cta">Sign In</a>
+      <a *ngIf="isLoggedIn" routerLink="/dashboard" class="pn-cta">Dashboard &rarr;</a>
+    </div>
+  </nav>
+
+  <div class="page-hero">
+    <div class="ph-chip"><span class="ph-chip-dot"></span> Civic Process</div>
+    <h1>How CIVIX Works</h1>
+    <p>A transparent, modern platform connecting residents with local government to solve real community problems.</p>
+  </div>
+
+  <div class="page-content">
+
+    <!-- Step Grid -->
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h3>Create a Petition</h3>
+        <p>Identify a critical municipal issue in your neighborhood. Set a title, description, signature goal, and target department.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h3>Gather Signatures</h3>
+        <p>Share with fellow residents in your jurisdiction. Verified citizens sign digitally to demonstrate collective community support.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <h3>Official Escalation</h3>
+        <p>Once a petition reaches its signature threshold, verified city officials and municipal leaders are automatically alerted for review.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <h3>Action & Resolution</h3>
+        <p>Track live official updates, status changes (Under Review, Victorious), and public feedback in an open, accountable timeline.</p>
+      </div>
+    </div>
+
+    <!-- Feature Cards -->
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+        Role-Based Civic Ecosystem
+      </h2>
+      <p>CIVIX provides tailored tools for two key pillars of local democracy:</p>
+      <ul>
+        <li><strong>Citizens:</strong> Create grassroots petitions, sign community causes, vote in local polls, and track civic progress in their exact city.</li>
+        <li><strong>Verified Officials:</strong> Review community concerns, provide transparent municipal status updates, and engage directly with constituents.</li>
+      </ul>
+    </div>
+
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+        Smart Jurisdiction Intelligence
+      </h2>
+      <p>Civic issues are local. CIVIX features built-in high-precision location detection and real-time municipal search to ensure petitions reach the exact city, ward, or district administration responsible for taking action.</p>
+    </div>
+
+    <div class="pc-card">
+      <h2>
+        <span class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+        Live Community Polls & Civic Metrics
+      </h2>
+      <p>Beyond petitions, engage in real-time community ballots on urban infrastructure, environmental policies, traffic management, and municipal budgets with immediate verifiable percentage breakdowns.</p>
+    </div>
+
+    <!-- CTA Card -->
+    <div class="pc-card" style="text-align:center; background: linear-gradient(135deg, #f0fdfa, #ccfbf1); border-color:#99f6e4;">
+      <h2 style="justify-content:center; margin-bottom:8px; font-size:20px;">Ready to make an impact in your city?</h2>
+      <p style="margin-bottom:20px; color:#0f766e;">Join thousands of engaged citizens and local representatives driving positive change.</p>
+      <div style="display:flex; justify-content:center; gap:12px;">
+        <a routerLink="/register" class="cf-submit" style="text-decoration:none; display:inline-flex;">Get Started Free</a>
+        <a routerLink="/login" class="pn-cta" style="display:inline-flex; align-items:center; padding:10px 20px; font-size:14px;">Sign In</a>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="page-footer">
+    <div class="pf-links">
+      <a routerLink="/privacy-policy">Privacy Policy</a>
+      <a routerLink="/terms-of-use">Terms of Use</a>
+      <a routerLink="/how-it-works">How It Works</a>
+      <a routerLink="/about">About</a>
+      <a routerLink="/contact">Contact</a>
+      <a routerLink="/help-center">Help Center</a>
+    </div>
+    <span class="pf-copy">&copy; 2026 Civix. All rights reserved.</span>
+  </footer>
+</div>

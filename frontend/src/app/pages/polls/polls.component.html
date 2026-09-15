@@ -1,0 +1,336 @@
+<div class="poll-page">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+
+    <div>
+      <div class="eyebrow">CIVIC PARTICIPATION</div>
+
+      <h1>Polls & Ballots</h1>
+
+      <p>
+        Share your opinion and help shape decisions in your community.
+      </p>
+    </div>
+
+    <button
+      class="create-btn"
+      (click)="createPoll()">
+
+      <span>＋</span>
+      Create Poll
+
+    </button>
+
+  </div>
+
+
+  <!-- STAT CARDS -->
+
+  <div class="stats-grid">
+
+    <div class="stat-card">
+
+      <div class="stat-icon green">
+        ◉
+      </div>
+
+      <div>
+        <h2>{{ polls.length }}</h2>
+        <p>Polls Available</p>
+      </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+      <div class="stat-icon blue">
+        ✓
+      </div>
+
+      <div>
+        <h2>{{ totalVotes }}</h2>
+        <p>Total Votes</p>
+      </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+      <div class="stat-icon yellow">
+        ◌
+      </div>
+
+      <div>
+        <h2>{{ filteredPolls.length }}</h2>
+        <p>Showing Results</p>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- MAIN CARD -->
+
+  <div class="poll-container">
+
+    <!-- TABS -->
+
+    <div class="tabs">
+
+      <button
+        [class.active]="activeTab === 'active'"
+        (click)="changeTab('active')">
+
+        Active Polls
+
+      </button>
+
+
+      <button
+        [class.active]="activeTab === 'voted'"
+        (click)="changeTab('voted')">
+
+        Polls I Voted On
+
+      </button>
+
+
+      <button
+        [class.active]="activeTab === 'mine'"
+        (click)="changeTab('mine')">
+
+        My Polls
+
+      </button>
+
+
+      <button
+        [class.active]="activeTab === 'closed'"
+        (click)="changeTab('closed')">
+
+        Closed Polls
+
+      </button>
+
+    </div>
+
+
+    <!-- FILTER BAR -->
+
+    <div class="filter-bar">
+
+      <div class="search-box">
+
+        <span>⌕</span>
+
+        <input
+          type="text"
+          [(ngModel)]="searchText"
+          placeholder="Search by title, keyword, or locality..."
+          (keyup.enter)="search()">
+
+      </div>
+
+
+      <select
+        [(ngModel)]="selectedLocation"
+        (change)="loadPolls()">
+
+        <option value="">
+          All Locations
+        </option>
+
+        <option value="Chennai">
+          Chennai
+        </option>
+
+        <option value="Bangalore">
+          Bangalore
+        </option>
+
+        <option value="Coimbatore">
+          Coimbatore
+        </option>
+
+        <option value="Madurai">
+          Madurai
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <!-- LOADING -->
+
+    <div
+      class="loading"
+      *ngIf="loading">
+
+      Loading polls...
+
+    </div>
+
+
+    <!-- NO RESULTS -->
+
+    <div
+      class="empty-state"
+      *ngIf="!loading && filteredPolls.length === 0">
+
+      <div class="empty-icon">
+        ◌
+      </div>
+
+      <h3>No polls found</h3>
+
+      <p>
+        No polls found with the current filters.
+      </p>
+
+      <button
+        (click)="searchText=''; selectedLocation=''; loadPolls()">
+
+        Clear Filters
+
+      </button>
+
+    </div>
+
+
+    <!-- POLL GRID -->
+
+    <div
+      class="poll-grid"
+      *ngIf="!loading && filteredPolls.length > 0">
+
+      <div
+        class="poll-card"
+        *ngFor="let poll of filteredPolls">
+
+
+        <!-- CARD TOP -->
+
+        <div class="card-top">
+
+          <span class="category">
+            CIVIC POLL
+          </span>
+
+          <span
+            class="status"
+            [class.closed]="poll.status === 'closed'">
+
+            <span class="status-dot"></span>
+
+            {{ poll.status | titlecase }}
+
+          </span>
+
+        </div>
+
+
+        <!-- TITLE -->
+
+        <h2>
+          {{ poll.title }}
+        </h2>
+
+
+        <!-- DESCRIPTION -->
+
+        <p class="description">
+
+          {{ poll.description }}
+
+        </p>
+
+
+        <!-- LOCATION -->
+
+        <div class="location">
+
+          <span>⌖</span>
+
+          {{ poll.target_location }}
+
+        </div>
+
+
+        <!-- DATE -->
+
+        <div class="date">
+
+          Closes:
+          {{ poll.closes_on | date:'MMM d, y' }}
+
+        </div>
+
+
+        <!-- RESULTS -->
+
+        <div class="mini-results">
+
+          <div
+            class="result-row"
+            *ngFor="let result of poll.results">
+
+            <div class="result-label">
+
+              <span>
+                {{ result.option }}
+              </span>
+
+              <span>
+                {{ result.percentage }}%
+              </span>
+
+            </div>
+
+            <div class="progress">
+
+              <div
+                class="progress-fill"
+                [style.width.%]="result.percentage">
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- FOOTER -->
+
+        <div class="card-footer">
+
+          <span>
+
+            {{ poll.total_votes || poll.vote_count || 0 }}
+            votes
+
+          </span>
+
+
+          <button
+            (click)="openPoll(poll.id)">
+
+            View Poll →
+            
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

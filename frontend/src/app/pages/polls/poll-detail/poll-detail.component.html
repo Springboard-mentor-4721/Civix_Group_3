@@ -1,0 +1,266 @@
+<div class="detail-page">
+
+  <div class="detail-wrapper">
+
+    <!-- BACK -->
+
+    <button
+      class="back"
+      (click)="back()">
+
+      ← Back to Polls
+
+    </button>
+
+
+    <div
+      class="loading"
+      *ngIf="loading">
+
+      Loading poll...
+
+    </div>
+
+
+    <div
+      class="detail-card"
+      *ngIf="!loading && poll">
+
+
+      <!-- HEADER -->
+
+      <div class="poll-header">
+
+        <div>
+
+          <span class="category">
+            CIVIC POLL
+          </span>
+
+          <span
+            class="status"
+            [class.closed]="poll.status === 'closed'">
+
+            ● {{ poll.status | titlecase }}
+
+          </span>
+
+        </div>
+
+
+        <button
+          class="refresh"
+          (click)="refresh()">
+
+          ↻ Refresh Results
+
+        </button>
+
+      </div>
+
+
+      <!-- TITLE -->
+
+      <h1>
+        {{ poll.title }}
+      </h1>
+
+      <p class="description">
+        {{ poll.description }}
+      </p>
+
+
+      <!-- META -->
+
+      <div class="meta">
+
+        <span>
+          ⌖ {{ poll.target_location }}
+        </span>
+
+        <span>
+          ◷ Closes
+          {{ poll.closes_on | date:'MMM d, y' }}
+        </span>
+
+        <span>
+          {{ poll.total_votes || 0 }} votes
+        </span>
+
+      </div>
+
+
+      <div class="divider"></div>
+
+
+      <!-- VOTING -->
+
+      <div
+        class="vote-section"
+        *ngIf="poll.status === 'active' && !poll.has_voted">
+
+        <h2>
+          What do you think?
+        </h2>
+
+        <p>
+          Select one option below.
+        </p>
+
+
+        <label
+          class="option"
+          *ngFor="let option of poll.options">
+
+          <input
+            type="radio"
+            name="pollOption"
+            [value]="option"
+            [(ngModel)]="selectedOption">
+
+          <span class="radio-design"></span>
+
+          <span>
+            {{ option }}
+          </span>
+
+        </label>
+
+
+        <button
+          class="vote-btn"
+          [disabled]="!selectedOption || submitting"
+          (click)="submitVote()">
+
+          {{ submitting
+              ? 'Submitting...'
+              : 'Submit Vote'
+          }}
+
+        </button>
+
+      </div>
+
+
+      <!-- RESULTS -->
+
+      <div
+        class="results-section"
+        *ngIf="poll.has_voted || poll.status === 'closed'">
+
+        <div class="results-title">
+
+          <div>
+
+            <h2>Live Results</h2>
+
+            <p>
+              {{ poll.total_votes || 0 }} total votes
+            </p>
+
+          </div>
+
+          <span
+            class="your-vote"
+            *ngIf="poll.has_voted">
+
+            ✓ You voted
+
+          </span>
+
+        </div>
+
+
+        <!-- RESULT BARS -->
+
+        <div
+          class="result"
+          *ngFor="let result of poll.results">
+
+          <div class="result-heading">
+
+            <span>
+              {{ result.option }}
+
+              <strong
+                *ngIf="result.option === poll.my_selected_option">
+
+                Your choice
+
+              </strong>
+
+            </span>
+
+            <span>
+              {{ result.percentage }}%
+            </span>
+
+          </div>
+
+
+          <div class="large-progress">
+
+            <div
+              class="large-fill"
+              [style.width.%]="result.percentage">
+
+            </div>
+
+          </div>
+
+
+          <div class="vote-count">
+
+            {{ result.count }} votes
+
+          </div>
+
+        </div>
+
+
+        <!-- CHANGE / REMOVE -->
+
+        <div
+          class="vote-actions"
+          *ngIf="poll.has_voted && poll.status === 'active'">
+
+          <button
+            class="secondary-btn"
+            (click)="changeVote()"
+            [disabled]="!selectedOption">
+
+            Update Vote
+
+          </button>
+
+
+          <button
+            class="remove-vote"
+            (click)="withdrawVote()">
+
+            Remove My Vote
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- ACTIVE BUT NO VOTE -->
+
+      <div
+        class="live-summary"
+        *ngIf="poll.status === 'active' && !poll.has_voted">
+
+        <span>
+          Live results will appear after you vote.
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

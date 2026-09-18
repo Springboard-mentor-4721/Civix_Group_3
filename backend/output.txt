@@ -1,0 +1,17 @@
+Existing users columns: ['id', 'name', 'email', 'password', 'role', 'location', 'is_verified', 'verification_status', 'created_at', 'updated_at', 'email_verified_at', 'verification_token_hash', 'verification_token_expires_at', 'reset_token_hash', 'reset_token_expires_at', 'is_email_verified', 'organization', 'department', 'designation', 'official_id', 'jurisdiction', 'phone', 'verification_submitted_at', 'verification_reviewed_at', 'verification_reviewed_by', 'verification_rejection_reason']
+  Skip (exists): is_email_verified
+  Skip (exists): organization
+  Skip (exists): department
+  Skip (exists): designation
+  Skip (exists): official_id
+  Skip (exists): jurisdiction
+  Skip (exists): phone
+  Skip (exists): verification_submitted_at
+  Skip (exists): verification_reviewed_at
+  Skip (exists): verification_reviewed_by
+  Skip (exists): verification_rejection_reason
+  Modified: verification_status enum
+  Backfilled: is_email_verified from is_verified
+  Modified: petitions.status enum
+New tables created (if not exist)
+Migration complete.

@@ -1,0 +1,536 @@
+<div class="app-layout">
+
+  <!-- Mobile Header -->
+  <header class="mobile-header">
+    <button class="menu-toggle" (click)="mobileSidebarOpen = !mobileSidebarOpen">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <span class="mobile-brand">CIVIX <span class="official-tag">Official</span></span>
+    <div class="mobile-avatar">
+      <img *ngIf="currentUser?.profile_picture_url" [src]="currentUser!.profile_picture_url!" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+      <span *ngIf="!currentUser?.profile_picture_url">{{ currentUser?.name?.charAt(0)?.toUpperCase() }}</span>
+    </div>
+  </header>
+
+  <div class="sidebar-backdrop" *ngIf="mobileSidebarOpen" (click)="mobileSidebarOpen = false"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.mobile-open]="mobileSidebarOpen">
+    <div class="sb-brand">
+      <div>
+        <div class="sb-wordmark">CIVIX</div>
+        <div class="sb-slogan">Official Portal</div>
+      </div>
+      <button class="sb-close" (click)="mobileSidebarOpen = false">&times;</button>
+    </div>
+
+    <div class="sb-user">
+      <div class="sb-avatar">
+        <img *ngIf="currentUser?.profile_picture_url" [src]="currentUser!.profile_picture_url!" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+        <span *ngIf="!currentUser?.profile_picture_url">{{ currentUser?.name?.charAt(0)?.toUpperCase() }}</span>
+      </div>
+      <div class="sb-user-info">
+        <span class="sb-name">{{ currentUser?.name }}</span>
+        <span class="sb-role">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Verified Official
+        </span>
+        <span class="sb-dept" *ngIf="currentUser?.department">{{ currentUser?.department }}</span>
+        <span class="sb-loc">{{ currentUser?.location || 'No location' }}</span>
+      </div>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="sb-section-label">Overview</div>
+
+      <a class="sb-link" [class.active]="activeNav === 'overview'" (click)="setNav('overview')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span>Dashboard</span>
+      </a>
+
+      <div class="sb-section-label">My Department</div>
+
+      <a class="sb-link" [class.active]="activeNav === 'petitions'" (click)="setNav('petitions')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Petition Review</span>
+      </a>
+
+      <div class="sb-section-label">Account</div>
+
+      <a class="sb-link" [class.active]="activeNav === 'profile'" (click)="setNav('profile')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>My Profile</span>
+      </a>
+
+      <a class="sb-link" [class.active]="activeNav === 'settings'" (click)="setNav('settings')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+    <div class="sb-footer">
+      <button class="sb-logout" (click)="promptLogout()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Area -->
+  <div class="main-area">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <h1 class="page-title">
+          <span *ngIf="activeNav === 'overview'">Dashboard Overview</span>
+          <span *ngIf="activeNav === 'petitions'">Petition Review — {{ currentUser?.department }}</span>
+          <span *ngIf="activeNav === 'profile'">My Profile</span>
+          <span *ngIf="activeNav === 'settings'">Settings</span>
+        </h1>
+      </div>
+      <div class="top-bar-right">
+        <div class="official-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          {{ currentUser?.department || 'Official' }}
+        </div>
+        <div class="tb-user-name">{{ currentUser?.name }}</div>
+      </div>
+    </header>
+
+    <main class="main-content">
+
+      <!-- ── OVERVIEW ─────────────────────────────────────────────────── -->
+      <div *ngIf="activeNav === 'overview'">
+        <div class="loading-state" *ngIf="loadingStats">
+          <div class="spinner"></div><span>Loading dashboard...</span>
+        </div>
+
+        <div *ngIf="!loadingStats">
+          <!-- Department info banner -->
+          <div class="dept-banner" *ngIf="stats">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            <span>Showing petitions for <strong>{{ stats.department }}</strong> department in <strong>{{ stats.jurisdiction }}</strong></span>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon teal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div class="stat-body">
+                <span class="stat-value">{{ stats?.total_petitions ?? '—' }}</span>
+                <span class="stat-label">Total Petitions</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div class="stat-body">
+                <span class="stat-value">{{ stats?.active ?? '—' }}</span>
+                <span class="stat-label">Active</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon amber">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div class="stat-body">
+                <span class="stat-value">{{ stats?.under_review ?? '—' }}</span>
+                <span class="stat-label">Under Review</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon blue">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <div class="stat-body">
+                <span class="stat-value">{{ stats?.in_progress ?? '—' }}</span>
+                <span class="stat-label">In Progress</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <div class="stat-body">
+                <span class="stat-value">{{ stats?.resolved ?? '—' }}</span>
+                <span class="stat-label">Resolved</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon purple">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              </div>
+              <div class="stat-body">
+                <span class="stat-value">{{ stats?.total_signatures ?? '—' }}</span>
+                <span class="stat-label">Total Signatures</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="overview-actions">
+            <button class="ov-action-btn" (click)="setNav('petitions')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Review Petitions
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PETITION REVIEW ─────────────────────────────────────────── -->
+      <div *ngIf="activeNav === 'petitions'">
+        <div class="panel-header">
+          <div>
+            <h2>{{ currentUser?.department }} Petitions</h2>
+            <p>Petitions in your department from your jurisdiction area.</p>
+          </div>
+          <div class="panel-controls">
+            <div class="search-wrap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" [(ngModel)]="searchQuery" placeholder="Search petitions..." />
+            </div>
+            <select [(ngModel)]="selectedStatus" (change)="loadPetitions()">
+              <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="petition-layout" [class.has-detail]="selectedPetition">
+
+          <!-- Table -->
+          <div class="petition-table-wrap">
+            <div class="loading-state" *ngIf="loadingPetitions">
+              <div class="spinner"></div><span>Loading petitions...</span>
+            </div>
+
+            <div class="empty-state" *ngIf="!loadingPetitions && filteredPetitions.length === 0">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <p>No petitions found for your department in your area</p>
+            </div>
+
+            <div class="petition-table" *ngIf="!loadingPetitions && filteredPetitions.length > 0">
+              <div class="pt-header">
+                <span>Petition</span>
+                <span>Category</span>
+                <span>Progress</span>
+                <span>Status</span>
+                <span>Actions</span>
+              </div>
+
+              <div class="pt-row" *ngFor="let p of filteredPetitions"
+                   [class.pt-row-selected]="selectedPetition?.id === p.id"
+                   (click)="openPetitionDetail(p)">
+                <div class="pt-title-cell">
+                  <span class="pt-title">{{ p.title }}</span>
+                  <span class="pt-loc">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    {{ p.location }}
+                  </span>
+                </div>
+                <div class="pt-cat-cell">
+                  <span class="cat-badge">{{ p.category }}</span>
+                </div>
+                <div class="pt-progress-cell">
+                  <div class="mini-pbar-bg">
+                    <div class="mini-pbar-fill" [style.width.%]="getProgressPct(p.signature_count, p.signature_goal)"></div>
+                  </div>
+                  <span class="mini-pbar-label">{{ p.signature_count }} / {{ p.signature_goal }}</span>
+                </div>
+                <div class="pt-status-cell">
+                  <span class="status-pill" [ngClass]="'status-' + p.status">
+                    <span class="status-dot"></span>
+                    {{ getStatusLabel(p.status) }}
+                  </span>
+                </div>
+                <div class="pt-action-cell" (click)="$event.stopPropagation()">
+                  <select [(ngModel)]="statusUpdates[p.id]" class="status-select">
+                    <option value="active">Active</option>
+                    <option value="under_review">Under Review</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                  <button class="btn-apply"
+                    (click)="updateStatus(p)"
+                    [disabled]="updatingStatusId === p.id || statusUpdates[p.id] === p.status">
+                    <span *ngIf="updatingStatusId === p.id" class="mini-spin"></span>
+                    <span>{{ updatingStatusId === p.id ? '...' : 'Apply' }}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detail Panel -->
+          <div class="petition-detail-panel" *ngIf="selectedPetition">
+            <div class="dp-header">
+              <h3>Petition Detail</h3>
+              <button class="dp-close" (click)="selectedPetition = null">&times;</button>
+            </div>
+
+            <div class="loading-state" *ngIf="loadingDetail">
+              <div class="spinner"></div><span>Loading...</span>
+            </div>
+
+            <div *ngIf="!loadingDetail">
+              <div class="dp-title">{{ selectedPetition.title }}</div>
+              <div class="dp-meta">
+                <span class="status-pill" [ngClass]="'status-' + selectedPetition.status">
+                  <span class="status-dot"></span>{{ getStatusLabel(selectedPetition.status) }}
+                </span>
+                <span class="dp-loc">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {{ selectedPetition.location }}
+                </span>
+                <span style="font-size:11px;color:#94a3b8;">{{ selectedPetition.created_at | date:'mediumDate' }}</span>
+              </div>
+              <p class="dp-desc">{{ selectedPetition.description }}</p>
+
+              <!-- Petition Images -->
+              <div *ngIf="selectedPetition.images?.length > 0" style="margin-bottom:16px;">
+                <div class="dp-section-label">Evidence Photos ({{ selectedPetition.images.length }})</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:8px;">
+                  <a *ngFor="let img of selectedPetition.images" [href]="img" target="_blank"
+                     style="display:block;border-radius:8px;overflow:hidden;aspect-ratio:1;border:1px solid #e2e8f0;">
+                    <img [src]="img" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                  </a>
+                </div>
+              </div>
+
+              <div class="dp-progress">
+                <div class="dp-progress-bar-bg">
+                  <div class="dp-progress-bar-fill" [style.width.%]="getProgressPct(selectedPetition.signature_count, selectedPetition.signature_goal)"></div>
+                </div>
+                <span class="dp-progress-label">{{ selectedPetition.signature_count }} of {{ selectedPetition.signature_goal }} signatures</span>
+              </div>
+
+              <div class="dp-responses" *ngIf="selectedPetition.official_responses?.length > 0">
+                <div class="dp-section-label">Official Responses</div>
+                <div class="dp-response-item" *ngFor="let r of selectedPetition.official_responses">
+                  <div class="dp-response-text">{{ r.response_text }}</div>
+                  <div class="dp-response-action" *ngIf="r.action_taken">Action: {{ r.action_taken }}</div>
+                  <div class="dp-response-date">{{ r.created_at | date:'medium' }}</div>
+                </div>
+              </div>
+
+              <div class="dp-section-label" style="margin-top:16px">Add Official Response</div>
+              <textarea class="dp-textarea" [(ngModel)]="responseText" placeholder="Write your official response..." rows="4"></textarea>
+              <input class="dp-input" [(ngModel)]="actionTaken" placeholder="Action taken (optional)" />
+              <button class="btn-submit-response"
+                (click)="submitResponse()"
+                [disabled]="submittingResponse || !responseText.trim()">
+                <span *ngIf="submittingResponse" class="mini-spin"></span>
+                <span>{{ submittingResponse ? 'Submitting...' : 'Submit Response' }}</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── SETTINGS ──────────────────────────────────────────────────── -->
+      <div *ngIf="activeNav === 'settings'">
+        <div class="settings-page">
+
+          <!-- 1. APPEARANCE -->
+          <div class="stg-section">
+            <div class="stg-section-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+              Appearance
+            </div>
+            <div class="stg-row">
+              <div class="stg-row-info"><span class="stg-row-label">Theme</span><span class="stg-row-desc">Choose your preferred color theme</span></div>
+              <div class="stg-theme-pills">
+                <button class="theme-pill" [class.active]="settings.theme==='light'" (click)="setSetting('theme','light')">☀️ Light</button>
+                <button class="theme-pill" [class.active]="settings.theme==='dark'" (click)="setSetting('theme','dark')">🌙 Dark</button>
+                <button class="theme-pill" [class.active]="settings.theme==='system'" (click)="setSetting('theme','system')">💻 System</button>
+              </div>
+            </div>
+            <div class="stg-row">
+              <div class="stg-row-info"><span class="stg-row-label">Language</span><span class="stg-row-desc">Interface display language</span></div>
+              <select class="stg-select" [(ngModel)]="settings.language" (change)="saveSettings()">
+                <option value="en">🇺🇸 English</option>
+                <option value="hi">🇮🇳 Hindi</option>
+                <option value="es">🇪🇸 Spanish</option>
+                <option value="fr">🇫🇷 French</option>
+                <option value="de">🇩🇪 German</option>
+                <option value="ar">🇸🇦 Arabic</option>
+              </select>
+            </div>
+            <div class="stg-row">
+              <div class="stg-row-info"><span class="stg-row-label">Font Size</span><span class="stg-row-desc">Adjust text size across the app</span></div>
+              <div class="stg-font-ctrl">
+                <button class="font-btn" (click)="changeFontSize(-1)" [disabled]="settings.fontSize <= 12">A−</button>
+                <span class="font-val">{{ settings.fontSize }}px</span>
+                <button class="font-btn" (click)="changeFontSize(1)" [disabled]="settings.fontSize >= 20">A+</button>
+              </div>
+            </div>
+            <div class="stg-row">
+              <div class="stg-row-info"><span class="stg-row-label">Compact Mode</span><span class="stg-row-desc">Reduce spacing for denser layout</span></div>
+              <label class="stg-toggle"><input type="checkbox" [(ngModel)]="settings.compactMode" (change)="saveSettings()"/><span class="stg-slider"></span></label>
+            </div>
+            <div class="stg-row">
+              <div class="stg-row-info"><span class="stg-row-label">Animations</span><span class="stg-row-desc">Enable UI transitions and animations</span></div>
+              <label class="stg-toggle"><input type="checkbox" [(ngModel)]="settings.animations" (change)="saveSettings()"/><span class="stg-slider"></span></label>
+            </div>
+          </div>
+
+          <!-- 2. NOTIFICATIONS -->
+          <div class="stg-section">
+            <div class="stg-section-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Notifications
+            </div>
+            <div class="stg-row"><div class="stg-row-info"><span class="stg-row-label">Email Notifications</span><span class="stg-row-desc">Receive updates via email</span></div><label class="stg-toggle"><input type="checkbox" [(ngModel)]="settings.emailNotifs" (change)="saveSettings()"/><span class="stg-slider"></span></label></div>
+            <div class="stg-row"><div class="stg-row-info"><span class="stg-row-label">Push Notifications</span><span class="stg-row-desc">Browser push alerts</span></div><label class="stg-toggle"><input type="checkbox" [(ngModel)]="settings.pushNotifs" (change)="saveSettings()"/><span class="stg-slider"></span></label></div>
+            <div class="stg-row"><div class="stg-row-info"><span class="stg-row-label">Petition Updates</span><span class="stg-row-desc">Notify on petition status changes</span></div><label class="stg-toggle"><input type="checkbox" [(ngModel)]="settings.petitionUpdates" (change)="saveSettings()"/><span class="stg-slider"></span></label></div>
+            <div class="stg-row"><div class="stg-row-info"><span class="stg-row-label">New Petition Alerts</span><span class="stg-row-desc">Alert when new petitions arrive in your department</span></div><label class="stg-toggle"><input type="checkbox" [(ngModel)]="settings.responseAlerts" (change)="saveSettings()"/><span class="stg-slider"></span></label></div>
+            <div class="stg-row"><div class="stg-row-info"><span class="stg-row-label">Weekly Digest</span><span class="stg-row-desc">Weekly summary of department activity</span></div><label class="stg-toggle"><input type="checkbox" [(ngModel)]="settings.weeklyDigest" (change)="saveSettings()"/><span class="stg-slider"></span></label></div>
+          </div>
+
+          <!-- 3. PRIVACY & SECURITY -->
+          <div class="stg-section">
+            <div class="stg-section-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Privacy &amp; Security
+            </div>
+            <div class="stg-row"><div class="stg-row-info"><span class="stg-row-label">Profile Visibility</span><span class="stg-row-desc">Who can see your official profile</span></div><select class="stg-select" [(ngModel)]="settings.profileVisibility" (change)="saveSettings()"><option value="public">Public</option><option value="members">Members Only</option><option value="private">Private</option></select></div>
+            <div class="stg-row"><div class="stg-row-info"><span class="stg-row-label">Show Activity Status</span><span class="stg-row-desc">Let citizens see when you're active</span></div><label class="stg-toggle"><input type="checkbox" [(ngModel)]="settings.activityStatus" (change)="saveSettings()"/><span class="stg-slider"></span></label></div>
+            <div class="stg-row"><div class="stg-row-info"><span class="stg-row-label">Anonymous Data Sharing</span><span class="stg-row-desc">Help improve Civix with anonymous usage data</span></div><label class="stg-toggle"><input type="checkbox" [(ngModel)]="settings.dataSharing" (change)="saveSettings()"/><span class="stg-slider"></span></label></div>
+            <div class="stg-row"><div class="stg-row-info"><span class="stg-row-label">Two-Factor Authentication</span><span class="stg-row-desc">Extra security layer for your account</span></div><span class="stg-badge-soon">Coming Soon</span></div>
+            <div class="stg-row"><div class="stg-row-info"><span class="stg-row-label">Active Sessions</span><span class="stg-row-desc">View and manage devices logged in</span></div><span class="stg-badge-soon">Coming Soon</span></div>
+          </div>
+
+          <!-- 4. ACCOUNT -->
+          <div class="stg-section">
+            <div class="stg-section-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Account
+            </div>
+            <div class="stg-row">
+              <div class="stg-row-info"><span class="stg-row-label">Reset Password</span><span class="stg-row-desc">Send a password reset link to <strong>{{ currentUser?.email }}</strong></span></div>
+              <button class="stg-action-btn" (click)="sendPasswordReset()" [disabled]="pwdResetSent">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                {{ pwdResetSent ? 'Email Sent ✓' : 'Send Reset Email' }}
+              </button>
+            </div>
+            <div class="stg-row">
+              <div class="stg-row-info"><span class="stg-row-label">Download My Data</span><span class="stg-row-desc">Export a copy of your Civix data</span></div>
+              <button class="stg-action-btn" (click)="downloadData()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download
+              </button>
+            </div>
+            <div class="stg-row">
+              <div class="stg-row-info"><span class="stg-row-label">App Tour</span><span class="stg-row-desc">Restart the guided walkthrough of Civix features</span></div>
+              <button class="stg-action-btn" (click)="restartTour()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Restart Tour
+              </button>
+            </div>
+          </div>
+
+          <!-- 5. DANGER ZONE -->
+          <div class="stg-section stg-danger-section">
+            <div class="stg-section-title danger">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Danger Zone
+            </div>
+            <div class="stg-row"><div class="stg-row-info"><span class="stg-row-label">Deactivate Account</span><span class="stg-row-desc">Temporarily disable your account.</span></div><button class="stg-danger-btn" (click)="deactivateAccount()">Deactivate</button></div>
+            <div class="stg-row"><div class="stg-row-info"><span class="stg-row-label">Delete Account</span><span class="stg-row-desc">Permanently delete your account and all data. Cannot be undone.</span></div><button class="stg-danger-btn delete" (click)="deleteAccount()">Delete Account</button></div>
+          </div>
+
+          <div class="stg-saved-toast" *ngIf="settingsSaved">✓ Settings saved</div>
+        </div>
+      </div>
+
+      <div *ngIf="activeNav === 'profile'">
+        <div class="panel-header">
+          <div>
+            <h2>My Profile</h2>
+            <p>Your official account details.</p>
+          </div>
+        </div>
+
+        <div class="profile-card">
+          <div class="profile-top">
+            <div class="profile-avatar">
+            <img *ngIf="currentUser?.profile_picture_url" [src]="currentUser!.profile_picture_url!" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+            <span *ngIf="!currentUser?.profile_picture_url">{{ currentUser?.name?.charAt(0)?.toUpperCase() }}</span>
+          </div>
+            <div>
+              <div class="profile-name">{{ currentUser?.name }}</div>
+              <div class="profile-email">{{ currentUser?.email }}</div>
+              <div class="profile-badges-row" style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap;">
+                <span style="background:#dcfce7;color:#166534;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700;">
+                  ✓ Verified Official
+                </span>
+                <span *ngIf="currentUser?.department_id" style="background:#2563eb;color:#fff;padding:2px 8px;border-radius:4px;font-family:monospace;font-size:12px;font-weight:700;">
+                  ID: {{ currentUser?.department_id }}
+                </span>
+                <span *ngIf="currentUser?.department" style="background:#f1f5f9;color:#334155;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;">
+                  {{ currentUser?.department }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-info-grid">
+            <div class="pi-item" *ngIf="currentUser?.organization">
+              <span class="pi-label">Organization</span>
+              <span class="pi-value">{{ currentUser?.organization }}</span>
+            </div>
+            <div class="pi-item" *ngIf="currentUser?.department">
+              <span class="pi-label">Department</span>
+              <span class="pi-value">{{ currentUser?.department }}</span>
+            </div>
+            <div class="pi-item" *ngIf="currentUser?.designation">
+              <span class="pi-label">Designation</span>
+              <span class="pi-value">{{ currentUser?.designation }}</span>
+            </div>
+            <div class="pi-item" *ngIf="currentUser?.jurisdiction">
+              <span class="pi-label">Jurisdiction</span>
+              <span class="pi-value">{{ currentUser?.jurisdiction }}</span>
+            </div>
+            <div class="pi-item" *ngIf="currentUser?.location">
+              <span class="pi-label">Location</span>
+              <span class="pi-value">{{ currentUser?.location }}</span>
+            </div>
+            <div class="pi-item" *ngIf="currentUser?.department_id">
+              <span class="pi-label">Department ID</span>
+              <span class="pi-value" style="font-family:monospace;font-weight:700;">{{ currentUser?.department_id }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Logout Modal -->
+  <div class="confirm-modal-backdrop" *ngIf="logoutConfirmOpen" (click)="cancelLogout()">
+    <div class="confirm-modal-card" (click)="$event.stopPropagation()">
+      <div class="confirm-modal-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </div>
+      <h3>Sign Out?</h3>
+      <p>Are you sure you want to sign out of the Official Portal?</p>
+      <div class="confirm-modal-actions">
+        <button class="btn-cmodal-cancel" (click)="cancelLogout()" [disabled]="loggingOut">Cancel</button>
+        <button class="btn-cmodal-danger" (click)="confirmLogout()" [disabled]="loggingOut">
+          <span *ngIf="loggingOut" class="mini-spin"></span>
+          <span>{{ loggingOut ? 'Signing out...' : 'Sign Out' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div class="toast-container" *ngIf="toasts.length > 0">
+    <div class="toast-item" *ngFor="let t of toasts" [ngClass]="'toast-' + t.type" (click)="dismissToast(t.id)">
+      <span class="toast-text">{{ t.message }}</span>
+      <button class="toast-close">&times;</button>
+    </div>
+  </div>
+
+</div>

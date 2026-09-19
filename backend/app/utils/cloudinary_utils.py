@@ -1,4 +1,5 @@
 import os
+import base64
 import secrets
 from fastapi import UploadFile, HTTPException, status
 from dotenv import load_dotenv
@@ -9,7 +10,6 @@ CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
 CLOUDINARY_API_KEY    = os.getenv("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 
-# Try initializing Cloudinary SDK
 _cloudinary_available = False
 if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
     try:
@@ -23,100 +23,53 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
         )
         _cloudinary_available = True
     except Exception as e:
-        print(f"⚠️ Cloudinary initialization warning: {e}")
-        _cloudinary_available = False
-
-MAX_FILE_SIZE_BYTES = 700 * 1024  # 700 KB
-BLOCKED_EXTENSIONS  = {".zip", ".rar", ".7z", ".tar", ".gz", ".exe", ".bat", ".sh"}
-ALLOWED_EXTENSIONS  = {".jpg", ".jpeg", ".png", ".webp", ".pdf"}
+        print(f"Cloudinary initialization warning: {e}")
 
 
-def validate_file_upload(file: UploadFile) -> str:
-    """Strictly validates file extension and size (Max 700 KB, no ZIP)."""
-    filename = file.filename or ""
-    ext = os.path.splitext(filename)[1].lower()
-
-    if ext in BLOCKED_EXTENSIONS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="ZIP and archive files are strictly prohibited. Please upload PDF, JPG, PNG, or WEBP."
-        )
-
-    if ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only PDF, JPG, JPEG, PNG, and WEBP files are allowed."
-        )
-
-    # Check file size (700 KB max limit)
-    file.file.seek(0, os.SEEK_END)
-    size = file.file.tell()
-    file.file.seek(0)
-
-    if size > MAX_FILE_SIZE_BYTES:
-        size_kb = round(size / 1024, 1)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File size ({size_kb} KB) exceeds the strict 700 KB maximum limit."
-        )
-
-    return ext
-
-
-def save_file_to_cloudinary_or_local(
-    file: UploadFile,
-    folder: str = "civix_uploads",
-    sub_dir: str = "profile_pictures"
-) -> dict:
+def upload_base64_image(data_url: str, folder: str = "civix/profile_pictures") -> dict:
     """
-    Validates and uploads file to Cloudinary if configured.
-    Falls back to local /uploads/ directory if Cloudinary credentials are not set.
-    Returns dict: {"url": str, "public_id": Optional[str], "type": str, "size": int}
+    Uploads a base64 data URL image to Cloudinary.
+    Falls back to local storage if Cloudinary is not configured.
+    Returns {"url": str, "public_id": str}
     """
-    ext = validate_file_upload(file)
-    content = file.file.read()
-    file_size = len(content)
-    public_id = None
+    # Strip data URL prefix: "data:image/jpeg;base64,..."
+    if "," in data_url:
+        header, encoded = data_url.split(",", 1)
+    else:
+        encoded = data_url
 
-    # 1. Attempt Cloudinary upload if configured
+    try:
+        image_bytes = base64.b64decode(encoded)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image data")
+
+    if len(image_bytes) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image too large (max 5MB)")
+
     if _cloudinary_available:
         try:
             import cloudinary.uploader
-            resource_type = "raw" if ext == ".pdf" else "image"
             res = cloudinary.uploader.upload(
-                content,
-                folder=f"civix/{folder}",
-                resource_type=resource_type,
-                use_filename=True,
-                unique_filename=True
+                image_bytes,
+                folder=folder,
+                resource_type="image",
+                unique_filename=True,
             )
-            secure_url = res.get("secure_url") or res.get("url")
-            public_id  = res.get("public_id")
-            if secure_url:
-                return {
-                    "url": secure_url,
-                    "public_id": public_id,
-                    "type": ext.lstrip('.'),
-                    "size": file_size
-                }
+            return {
+                "url": res.get("secure_url") or res.get("url"),
+                "public_id": res.get("public_id"),
+            }
         except Exception as e:
             print(f"⚠️ Cloudinary upload failed ({e}). Falling back to local storage.")
 
-    # 2. Fallback local storage
-    upload_dir = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", sub_dir)
+    # Local fallback
+    upload_dir = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "profile_pictures")
     os.makedirs(upload_dir, exist_ok=True)
-
-    safe_name = f"file_{secrets.token_hex(8)}{ext}"
-    file_path = os.path.join(upload_dir, safe_name)
-
-    with open(file_path, "wb") as f:
-        f.write(content)
-
-    local_url = f"/uploads/{sub_dir}/{safe_name}"
+    filename = f"profile_{secrets.token_hex(10)}.jpg"
+    filepath = os.path.join(upload_dir, filename)
+    with open(filepath, "wb") as f:
+        f.write(image_bytes)
     return {
-        "url": local_url,
-        "public_id": safe_name,
-        "type": ext.lstrip('.'),
-        "size": file_size
+        "url": f"/uploads/profile_pictures/{filename}",
+        "public_id": filename,
     }
-

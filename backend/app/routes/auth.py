@@ -1,54 +1,52 @@
 import os
+import hashlib
 import secrets
+import string
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.user import User, UserRole, VerificationStatus
+from app.models.user import User, UserRole
 from app.schemas.user import (
-    UserRegister, UserLogin, UserResponse, TokenResponse, UserUpdate,
-    ResendVerificationRequest, ForgotPasswordRequest, ResetPasswordRequest,
+    CitizenRegister, OfficialRegister, UserLogin, UserResponse, TokenResponse,
+    UserUpdate, ResendVerificationRequest, ValidateTokenResponse,
+    ChangePasswordRequest, RequestPasswordChangeRequest,
 )
 from app.utils.security import hash_password, verify_password
 from app.utils.jwt import create_access_token, decode_access_token, is_token_expired
-from app.utils.email import send_verification_email, send_password_reset_email
+from app.utils.cloudinary_utils import upload_base64_image
+from app.utils.email import (
+    send_verification_email,
+    send_official_credentials_email,
+    send_password_change_email,
+)
 
 load_dotenv()
 
 EMAIL_VERIFICATION_EXPIRE_MINUTES = int(os.getenv("EMAIL_VERIFICATION_EXPIRE_MINUTES", "30"))
 PASSWORD_RESET_EXPIRE_MINUTES     = int(os.getenv("PASSWORD_RESET_EXPIRE_MINUTES", "30"))
-MAX_LOGIN_ATTEMPTS                = int(os.getenv("MAX_LOGIN_ATTEMPTS", "5"))
-LOCKOUT_MINUTES                   = int(os.getenv("LOCKOUT_MINUTES", "15"))
-MAX_ACTIVE_SESSIONS               = int(os.getenv("MAX_ACTIVE_SESSIONS", "2"))
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
-
 _bearer_scheme = HTTPBearer()
 
 # In-memory stores
-# NOTE: These reset on server restart. Use DB/Redis for production.
 _blacklisted_tokens: set[str] = set()
-_verification_tokens: dict[str, tuple[int, datetime]] = {}
-_reset_tokens: dict[str, tuple[int, datetime]] = {}
 
-# Rate limiting: email -> (failed_count, lockout_until | None)
+# Rate limiting: email -> (failed_count, locked_until | None)
 _login_attempts: dict[str, tuple[int, datetime | None]] = {}
 
-# Active sessions: user_id -> list of (token, issued_at) oldest first
+# Active sessions: user_id -> list[token] (max 2)
 _active_sessions: dict[int, list[str]] = {}
 
+MAX_LOGIN_ATTEMPTS = 5
+LOCKOUT_MINUTES    = 30
+MAX_SESSIONS       = 2
 
-def _utcnow() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
-
-
-# ── Rate limit helpers ─────────────────────────────────────────────────────────
 
 def _check_rate_limit(email: str) -> None:
-    """Raise 429 if account is locked out."""
     entry = _login_attempts.get(email)
     if not entry:
         return
@@ -57,37 +55,26 @@ def _check_rate_limit(email: str) -> None:
         remaining = int((locked_until - _utcnow()).total_seconds() // 60) + 1
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Too many failed login attempts. Try again in {remaining} minute(s).",
+            detail={"code": "account_locked", "message": f"Too many failed attempts. Try again in {remaining} minute(s)."},
         )
-    # Lockout expired — reset
     if locked_until and _utcnow() >= locked_until:
         _login_attempts.pop(email, None)
 
 
-def _record_failed_attempt(email: str) -> None:
-    """Increment failed attempt counter; lock after MAX_LOGIN_ATTEMPTS."""
-    entry = _login_attempts.get(email, (0, None))
-    attempts = entry[0] + 1
-    locked_until = None
-    if attempts >= MAX_LOGIN_ATTEMPTS:
-        locked_until = _utcnow() + timedelta(minutes=LOCKOUT_MINUTES)
+def _record_failed(email: str) -> None:
+    attempts, _ = _login_attempts.get(email, (0, None))
+    attempts += 1
+    locked_until = _utcnow() + timedelta(minutes=LOCKOUT_MINUTES) if attempts >= MAX_LOGIN_ATTEMPTS else None
     _login_attempts[email] = (attempts, locked_until)
 
 
 def _clear_attempts(email: str) -> None:
-    """Clear failed attempts on successful login."""
     _login_attempts.pop(email, None)
 
 
-# ── Session (device) limit helpers ────────────────────────────────────────────
-
 def _register_session(user_id: int, token: str) -> None:
-    """Add token to active sessions. Evict oldest if limit exceeded."""
-    sessions = _active_sessions.get(user_id, [])
-    # Remove blacklisted AND expired tokens — they are no longer active
-    sessions = [t for t in sessions if t not in _blacklisted_tokens and not is_token_expired(t)]
-    if len(sessions) >= MAX_ACTIVE_SESSIONS:
-        # Evict the oldest active session
+    sessions = [t for t in _active_sessions.get(user_id, []) if t not in _blacklisted_tokens and not is_token_expired(t)]
+    if len(sessions) >= MAX_SESSIONS:
         oldest = sessions.pop(0)
         _blacklisted_tokens.add(oldest)
     sessions.append(token)
@@ -95,9 +82,30 @@ def _register_session(user_id: int, token: str) -> None:
 
 
 def _remove_session(user_id: int, token: str) -> None:
-    """Remove token from active sessions on logout."""
     sessions = _active_sessions.get(user_id, [])
     _active_sessions[user_id] = [t for t in sessions if t != token]
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _hash_token(raw: str) -> str:
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def _gen_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def _gen_temp_password(length: int = 12) -> str:
+    alphabet = string.ascii_letters + string.digits + "!@#$%"
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+def _gen_dept_id(department: str) -> str:
+    prefix = "".join(w[0].upper() for w in department.split()[:3])
+    return f"{prefix}-{secrets.randbelow(9000) + 1000}"
 
 
 # ── Auth dependency ────────────────────────────────────────────────────────────
@@ -110,7 +118,7 @@ def get_current_user(
     if token in _blacklisted_tokens:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Session expired or logged out from another device. Please login again.",
+            detail="Session expired. Please login again.",
         )
     payload = decode_access_token(token)
     user = db.query(User).filter(User.id == payload["user_id"]).first()
@@ -119,72 +127,231 @@ def get_current_user(
     return user
 
 
-# ── Register ───────────────────────────────────────────────────────────────────
+def require_citizen(user: User = Depends(get_current_user)) -> User:
+    if user.role != UserRole.citizen:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Citizens only")
+    return user
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(payload: UserRegister, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.email == payload.email).first():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
 
-    is_citizen = payload.role == UserRole.citizen
+def require_official(user: User = Depends(get_current_user)) -> User:
+    if user.role != UserRole.official:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Officials only")
+    if user.must_change_password:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "password_change_required", "message": "You must change your password before accessing the portal."},
+        )
+    return user
+
+
+# ── Citizen Register ───────────────────────────────────────────────────────────
+
+@router.post("/register/citizen", status_code=status.HTTP_201_CREATED)
+def register_citizen(payload: CitizenRegister, db: Session = Depends(get_db)):
+    if db.query(User).filter(User.email == payload.email.lower()).first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "email_already_registered", "message": "This email is already registered."},
+        )
+    raw_token = _gen_token()
     user = User(
         name=payload.name,
-        email=payload.email,
+        email=payload.email.lower(),
         password=hash_password(payload.password),
-        role=payload.role,
+        role=UserRole.citizen,
         location=payload.location,
-        is_verified=is_citizen,
-        verification_status=VerificationStatus.not_required if is_citizen else VerificationStatus.pending,
+        email_verification_token_hash=_hash_token(raw_token),
+        email_verification_token_expires_at=_utcnow() + timedelta(minutes=EMAIL_VERIFICATION_EXPIRE_MINUTES),
     )
     db.add(user)
     db.commit()
     db.refresh(user)
-    return user
+    send_verification_email(user.email, raw_token)
+    print(f"[DEV] Citizen verification token for {user.email}: {raw_token}")
+    return {"message": "Registration successful. Please check your email to verify your account."}
+
+
+# ── Official Register ──────────────────────────────────────────────────────────
+
+@router.post("/register/official", status_code=status.HTTP_201_CREATED)
+def register_official(payload: OfficialRegister, db: Session = Depends(get_db)):
+    if db.query(User).filter(User.email == payload.email.lower()).first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "email_already_registered", "message": "This email is already registered."},
+        )
+    dept_id = _gen_dept_id(payload.department)
+    raw_token = _gen_token()
+    user = User(
+        name=payload.name,
+        email=payload.email.lower(),
+        password=hash_password(_gen_token()),  # placeholder — overwritten after face verification
+        role=UserRole.official,
+        location=payload.location,
+        department=payload.department,
+        department_id=dept_id,
+        email_verification_token_hash=_hash_token(raw_token),
+        email_verification_token_expires_at=_utcnow() + timedelta(minutes=EMAIL_VERIFICATION_EXPIRE_MINUTES),
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    send_verification_email(user.email, raw_token)
+    print(f"[DEV] Official verification token for {user.email}: {raw_token}")
+    return {"message": "Registration successful. Please check your email to verify your account."}
+
+
+# ── Email Verification ─────────────────────────────────────────────────────────
+
+@router.get("/verify-email")
+def verify_email(token: str, db: Session = Depends(get_db)):
+    token_hash = _hash_token(token)
+    user = db.query(User).filter(User.email_verification_token_hash == token_hash).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "invalid_token", "message": "Invalid or expired verification link."},
+        )
+    if user.email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "token_already_used", "message": "Email already verified."},
+        )
+    if user.email_verification_token_expires_at and _utcnow() > user.email_verification_token_expires_at:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "expired_token", "message": "Verification link has expired. Please request a new one."},
+        )
+
+    user.email_verified    = True
+    user.email_verified_at = _utcnow()
+    user.email_verification_token_hash = None
+    user.email_verification_token_expires_at = None
+    db.commit()
+    return {"message": "Email verified successfully. Please complete face verification."}
+
+
+@router.post("/resend-verification")
+def resend_verification(payload: ResendVerificationRequest, db: Session = Depends(get_db)):
+    _GENERIC = "If an unverified account exists with this email, a new verification link has been sent."
+    user = db.query(User).filter(User.email == payload.email.lower()).first()
+    if not user or user.email_verified:
+        return {"message": _GENERIC}
+    raw_token = _gen_token()
+    user.email_verification_token_hash = _hash_token(raw_token)
+    user.email_verification_token_expires_at = _utcnow() + timedelta(minutes=EMAIL_VERIFICATION_EXPIRE_MINUTES)
+    db.commit()
+    send_verification_email(user.email, raw_token)
+    print(f"[DEV] Resend verification token for {user.email}: {raw_token}")
+    return {"message": _GENERIC}
+
+
+# ── Face Verification ──────────────────────────────────────────────────────────
+
+@router.post("/face-verification")
+def face_verification(payload: dict, db: Session = Depends(get_db)):
+    """
+    Accepts: {"email": str, "image": "data:image/jpeg;base64,..."}
+    Email is used to identify the user (not yet logged in at this stage).
+    """
+    email = (payload.get("email") or "").lower().strip()
+    image_data = payload.get("image") or ""
+
+    if not email or not image_data:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email and image are required")
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if not user.email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "email_not_verified", "message": "Please verify your email first."},
+        )
+    if user.face_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "token_already_used", "message": "Face verification already completed."},
+        )
+
+    result = upload_base64_image(image_data, folder="civix/profile_pictures")
+
+    user.profile_picture_url      = result["url"]
+    user.profile_picture_public_id = result["public_id"]
+    user.face_verified             = True
+    user.face_verified_at          = _utcnow()
+    db.commit()
+
+    # For officials: generate temp password and send credentials email
+    if user.role == UserRole.official and not user.must_change_password:
+        temp_password = _gen_temp_password()
+        user.password             = hash_password(temp_password)
+        user.must_change_password = True
+        db.commit()
+        send_official_credentials_email(
+            to_email=user.email,
+            name=user.name,
+            temp_password=temp_password,
+            department=user.department or "",
+            department_id=user.department_id or "",
+        )
+        print(f"[DEV] Official temp password for {user.email}: {temp_password}")
+
+    return {"message": "Face verification completed. Registration is complete."}
 
 
 # ── Login ──────────────────────────────────────────────────────────────────────
 
 @router.post("/login", response_model=TokenResponse)
 def login(payload: UserLogin, db: Session = Depends(get_db)):
-    # Normalize email for consistent rate-limit tracking and DB lookup
     email = payload.email.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
 
-    # 1. Check rate limit before touching DB
     _check_rate_limit(email)
 
-    # 2. Validate credentials (query with normalized email)
-    user = db.query(User).filter(User.email == email).first()
     if not user or not verify_password(payload.password, user.password):
-        _record_failed_attempt(email)
+        _record_failed(email)
         entry = _login_attempts.get(email, (0, None))
-        remaining = MAX_LOGIN_ATTEMPTS - entry[0]
-        if remaining <= 0:
+        remaining_attempts = MAX_LOGIN_ATTEMPTS - entry[0]
+        if remaining_attempts <= 0:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"Too many failed login attempts. Account locked for {LOCKOUT_MINUTES} minute(s).",
+                detail={"code": "account_locked", "message": f"Account locked for {LOCKOUT_MINUTES} minutes due to too many failed attempts."},
             )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid credentials. {remaining} attempt(s) remaining.",
+            detail={"code": "invalid_credentials", "message": f"Invalid email or password. {remaining_attempts} attempt(s) remaining."},
         )
 
-    # 3. Official verification check
-    if user.role == UserRole.official and user.verification_status in (
-        VerificationStatus.pending, VerificationStatus.rejected,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Official account verification is {user.verification_status.value}",
-        )
-
-    # 4. Clear failed attempts on success
     _clear_attempts(email)
 
-    # 5. Issue token and register session (enforces device limit)
+    if not user.email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "email_not_verified", "message": "Please verify your email before logging in."},
+        )
+
+    if not user.face_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "face_not_verified", "message": "Please complete face verification before logging in."},
+        )
+
     token = create_access_token(user_id=user.id, role=user.role.value)
     _register_session(user.id, token)
 
-    return TokenResponse(access_token=token)
+    # If official must change password: send change-password email and block portal access
+    if user.role == UserRole.official and user.must_change_password:
+        raw_reset = _gen_token()
+        user.password_reset_token_hash       = _hash_token(raw_reset)
+        user.password_reset_token_expires_at = _utcnow() + timedelta(minutes=PASSWORD_RESET_EXPIRE_MINUTES)
+        user.password_reset_used_at          = None
+        db.commit()
+        send_password_change_email(user.email, raw_reset)
+        print(f"[DEV] Password change token for {user.email}: {raw_reset}")
+
+    return TokenResponse(access_token=token, must_change_password=user.must_change_password)
 
 
 # ── Logout ─────────────────────────────────────────────────────────────────────
@@ -195,16 +362,11 @@ def logout(
     db: Session = Depends(get_db),
 ):
     token = credentials.credentials
-    if token in _blacklisted_tokens:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Already logged out")
-
-    # Decode to get user_id for session cleanup
     try:
         payload = decode_access_token(token)
         _remove_session(payload["user_id"], token)
     except Exception:
         pass
-
     _blacklisted_tokens.add(token)
     return {"message": "Logged out successfully"}
 
@@ -231,70 +393,78 @@ def update_me(
     return current_user
 
 
-# ── Email Verification ─────────────────────────────────────────────────────────
+# ── Password Change (Official first login) ────────────────────────────────────
 
-@router.get("/verify-email")
-def verify_email(token: str, db: Session = Depends(get_db)):
-    entry = _verification_tokens.get(token)
-    if not entry:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification token.")
-    user_id, expires_at = entry
-    if _utcnow() > expires_at:
-        _verification_tokens.pop(token, None)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification token.")
-    user = db.query(User).filter(User.id == user_id).first()
+@router.post("/request-password-change")
+def request_password_change(payload: RequestPasswordChangeRequest, db: Session = Depends(get_db)):
+    _GENERIC = "If an account exists with this email, a password-change link has been sent."
+    user = db.query(User).filter(User.email == payload.email.lower()).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification token.")
-
-    user.email_verified_at   = _utcnow()
-    user.is_verified         = True
-    user.verification_status = VerificationStatus.verified
-    db.commit()
-    _verification_tokens.pop(token, None)
-    return {"message": "Email verified successfully."}
-
-
-@router.post("/resend-verification")
-def resend_verification(payload: ResendVerificationRequest, db: Session = Depends(get_db)):
-    _GENERIC = "If the account exists and is not verified, a verification email has been sent."
-    user = db.query(User).filter(User.email == payload.email).first()
-    if not user or user.email_verified_at is not None:
         return {"message": _GENERIC}
-    token = secrets.token_urlsafe(32)
-    _verification_tokens[token] = (user.id, _utcnow() + timedelta(minutes=EMAIL_VERIFICATION_EXPIRE_MINUTES))
-    print(f"[DEV] Verification token for {user.email}: {token}")
-    send_verification_email(user.email, token)
+    raw_token = _gen_token()
+    user.password_reset_token_hash       = _hash_token(raw_token)
+    user.password_reset_token_expires_at = _utcnow() + timedelta(minutes=PASSWORD_RESET_EXPIRE_MINUTES)
+    user.password_reset_used_at          = None
+    db.commit()
+    send_password_change_email(user.email, raw_token)
+    print(f"[DEV] Password change token for {user.email}: {raw_token}")
     return {"message": _GENERIC}
 
 
-# ── Password Reset ─────────────────────────────────────────────────────────────
+@router.post("/validate-password-token", response_model=ValidateTokenResponse)
+def validate_password_token(payload: dict, db: Session = Depends(get_db)):
+    raw_token = (payload.get("token") or "").strip()
+    if not raw_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "invalid_token", "message": "Token is required."},
+        )
+    token_hash = _hash_token(raw_token)
+    user = db.query(User).filter(User.password_reset_token_hash == token_hash).first()
 
-@router.post("/forgot-password")
-def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
-    _GENERIC = "If an account exists with this email, a password reset link has been sent."
-    user = db.query(User).filter(User.email == payload.email).first()
     if not user:
-        return {"message": _GENERIC}
-    token = secrets.token_urlsafe(32)
-    _reset_tokens[token] = (user.id, _utcnow() + timedelta(minutes=PASSWORD_RESET_EXPIRE_MINUTES))
-    print(f"[DEV] Password reset token for {user.email}: {token}")
-    send_password_reset_email(user.email, token)
-    return {"message": _GENERIC}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "invalid_token", "message": "Invalid or expired password-change link."},
+        )
+    if user.password_reset_used_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "token_already_used", "message": "This password-change link has already been used."},
+        )
+    if user.password_reset_token_expires_at and _utcnow() > user.password_reset_token_expires_at:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "expired_token", "message": "This password-change link has expired."},
+        )
+    return ValidateTokenResponse(email=user.email)
 
 
-@router.post("/reset-password")
-def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
-    entry = _reset_tokens.get(payload.token)
-    if not entry:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token.")
-    user_id, expires_at = entry
-    if _utcnow() > expires_at:
-        _reset_tokens.pop(payload.token, None)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token.")
-    user = db.query(User).filter(User.id == user_id).first()
+@router.post("/change-password")
+def change_password(payload: ChangePasswordRequest, db: Session = Depends(get_db)):
+    token_hash = _hash_token(payload.token)
+    user = db.query(User).filter(User.password_reset_token_hash == token_hash).first()
+
     if not user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token.")
-    user.password = hash_password(payload.new_password)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "invalid_token", "message": "Invalid or expired password-change link."},
+        )
+    if user.password_reset_used_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "token_already_used", "message": "This link has already been used."},
+        )
+    if user.password_reset_token_expires_at and _utcnow() > user.password_reset_token_expires_at:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "expired_token", "message": "This password-change link has expired."},
+        )
+
+    user.password                    = hash_password(payload.new_password)
+    user.must_change_password        = False
+    user.password_reset_used_at      = _utcnow()
+    user.password_reset_token_hash   = None
+    user.password_reset_token_expires_at = None
     db.commit()
-    _reset_tokens.pop(payload.token, None)
-    return {"message": "Password reset successfully."}
+    return {"message": "Password changed successfully. Please login with your new password."}

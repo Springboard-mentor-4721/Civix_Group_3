@@ -1,22 +1,44 @@
 from fastapi import APIRouter, Depends, HTTPException, status as http_status
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.models.petition import Petition
+from app.database import get_db, SessionLocal
+from app.models.petition import Petition, PetitionPhoto
 from app.models.signature import Signature
+from app.models.official_response import OfficialResponse
 from app.schemas.petition import (
     PetitionCreate, PetitionUpdate, PetitionResponse,
     PetitionCategory, PetitionStatus, PetitionDetailResponse,
     PetitionDeleteResponse, SignatureResponse,
     MyPetitionsResponse, PetitionStatusUpdate,
+    DashboardStats, OfficialResponseCreate, OfficialResponseOut,
 )
-from app.routes.auth import get_current_user
-from app.models.user import User
+from app.routes.auth import get_current_user, require_official
+from app.models.user import User, UserRole
+from app.utils.cloudinary_utils import upload_base64_image
+from app.utils.email import send_petition_notification_email
+import threading
 
 router = APIRouter(prefix="/api/petitions", tags=["Petitions"])
 
 
-def _build_petition_dict(petition: Petition, signature_count: int) -> dict:
+def _build_petition_dict(petition: Petition, signature_count: int, photos_list=None) -> dict:
+    if photos_list is not None:
+        photos_data = photos_list
+    else:
+        try:
+            photos_data = [{"id": p.id, "url": p.url} for p in (petition.photos or [])]
+        except Exception:
+            photos_data = []
+
+    creator_name = None
+    creator_profile_pic = None
+    try:
+        if petition.creator:
+            creator_name = petition.creator.name
+            creator_profile_pic = petition.creator.profile_picture_url
+    except Exception:
+        pass
+
     return {
         "id": petition.id,
         "title": petition.title,
@@ -27,8 +49,11 @@ def _build_petition_dict(petition: Petition, signature_count: int) -> dict:
         "signature_goal": petition.signature_goal,
         "signature_count": signature_count,
         "creator_id": petition.creator_id,
+        "creator_name": creator_name,
+        "creator_profile_picture_url": creator_profile_pic,
         "created_at": petition.created_at,
         "updated_at": petition.updated_at,
+        "photos": photos_data,
     }
 
 
@@ -44,6 +69,12 @@ def create_petition(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # Validate photos count
+    if not payload.photos or len(payload.photos) < 3:
+        raise HTTPException(status_code=400, detail="Minimum 3 photos are required")
+    if len(payload.photos) > 5:
+        raise HTTPException(status_code=400, detail="Maximum 5 photos are allowed")
+
     petition = Petition(
         creator_id=current_user.id,
         title=payload.title,
@@ -56,7 +87,133 @@ def create_petition(
     db.add(petition)
     db.commit()
     db.refresh(petition)
-    return _build_petition_dict(petition, 0)
+
+    # Upload photos to Cloudinary and save
+    photos_out = []
+    for img_data in payload.photos:
+        try:
+            result = upload_base64_image(img_data, folder="civix/petition_photos")
+            photo = PetitionPhoto(
+                petition_id=petition.id,
+                url=result["url"],
+                public_id=result.get("public_id"),
+            )
+            db.add(photo)
+            db.flush()
+            photos_out.append({"id": photo.id, "url": photo.url})
+        except Exception as e:
+            print(f"[WARN] Photo upload failed: {e}")
+    db.commit()
+
+    pet_id = petition.id
+    pet_location = payload.location.strip()
+    pet_title = payload.title
+    pet_description = payload.description
+    pet_category = payload.category.value if hasattr(payload.category, 'value') else str(payload.category)
+    creator_id = current_user.id
+
+    # Send email to all citizens in same location (in isolated background thread)
+    def _notify(p_id: int, p_loc: str, p_title: str, p_desc: str, p_cat: str, c_id: int):
+        bg_db = SessionLocal()
+        try:
+            citizens = bg_db.query(User).filter(
+                (User.location == p_loc) | (User.location.ilike(f"%{p_loc}%")),
+                User.role == UserRole.citizen,
+                User.id != c_id,
+            ).all()
+            for citizen in citizens:
+                try:
+                    send_petition_notification_email(
+                        to_email=citizen.email,
+                        citizen_name=citizen.name,
+                        petition_title=p_title,
+                        petition_description=p_desc,
+                        petition_location=p_loc,
+                        petition_category=p_cat,
+                        petition_id=p_id,
+                    )
+                except Exception as e:
+                    print(f"[WARN] Email to {citizen.email} failed: {e}")
+        except Exception as e:
+            print(f"[WARN] Notification thread error: {e}")
+        finally:
+            bg_db.close()
+
+    threading.Thread(
+        target=_notify,
+        args=(pet_id, pet_location, pet_title, pet_description, pet_category, creator_id),
+        daemon=True
+    ).start()
+
+    return _build_petition_dict(petition, 0, photos_list=photos_out)
+
+
+# ── Official Dashboard Stats ───────────────────────────────────────────────────
+
+# ── Official Dashboard Stats ───────────────────────────────────────────────────
+
+@router.get("/official/dashboard", response_model=DashboardStats)
+def official_dashboard(
+    current_user: User = Depends(require_official),
+    db: Session = Depends(get_db),
+):
+    query = db.query(Petition)
+    if current_user.department:
+        query = query.filter(Petition.category == current_user.department)
+    if current_user.location:
+        query = query.filter(Petition.location.ilike(f"%{current_user.location}%"))
+
+    petitions = query.all()
+    ids = [p.id for p in petitions]
+    total_sigs = db.query(Signature).filter(Signature.petition_id.in_(ids)).count() if ids else 0
+
+    def _count(s: PetitionStatus) -> int:
+        return sum(1 for p in petitions if p.status == s)
+
+    return DashboardStats(
+        total_petitions=len(petitions),
+        active=_count(PetitionStatus.active),
+        under_review=_count(PetitionStatus.under_review),
+        in_progress=_count(PetitionStatus.in_progress),
+        resolved=_count(PetitionStatus.resolved),
+        closed=_count(PetitionStatus.closed),
+        total_signatures=total_sigs,
+        department=current_user.department or "",
+        jurisdiction=current_user.location or "",
+    )
+
+
+# ── Official Petition List ─────────────────────────────────────────────────────
+
+@router.get("/official/list")
+def official_petition_list(
+    petition_status: PetitionStatus | None = None,
+    page: int = 1,
+    per_page: int = 100,
+    current_user: User = Depends(require_official),
+    db: Session = Depends(get_db),
+):
+    query = db.query(Petition)
+    if current_user.department:
+        query = query.filter(Petition.category == current_user.department)
+    if current_user.location:
+        query = query.filter(Petition.location.ilike(f"%{current_user.location}%"))
+    if petition_status:
+        query = query.filter(Petition.status == petition_status)
+
+    total = query.count()
+    petitions = (
+        query.order_by(Petition.created_at.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
+    return {
+        "petitions": [_build_petition_dict(p, _get_signature_count(db, p.id)) for p in petitions],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+    }
 
 
 # ── List Petitions (auth required) ────────────────────────────────────────────
@@ -72,6 +229,10 @@ def get_petitions(
     db: Session = Depends(get_db),
 ):
     query = db.query(Petition)
+
+    # Officials can ONLY see petitions in their assigned department
+    if current_user.role == UserRole.official and current_user.department:
+        query = query.filter(Petition.category == current_user.department)
 
     if location:
         query = query.filter(Petition.location == location)
@@ -157,14 +318,40 @@ def get_petition(
     if not petition:
         raise HTTPException(status_code=404, detail="Petition not found")
 
+    if current_user.role == UserRole.official and current_user.department:
+        if petition.category != current_user.department:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Access denied. As an Official of the '{current_user.department}' department, you can only view petitions related to your department."
+            )
+
     signature_count = _get_signature_count(db, petition_id)
     has_signed = db.query(Signature).filter(
         Signature.petition_id == petition_id,
         Signature.user_id == current_user.id,
     ).first() is not None
 
+    responses = (
+        db.query(OfficialResponse)
+        .filter(OfficialResponse.petition_id == petition_id)
+        .order_by(OfficialResponse.created_at.desc())
+        .all()
+    )
+    resp_list = [
+        {
+            "id": r.id,
+            "petition_id": r.petition_id,
+            "official_id": r.official_id,
+            "response_text": r.response_text,
+            "action_taken": r.action_taken,
+            "created_at": r.created_at,
+        }
+        for r in responses
+    ]
+
     data = _build_petition_dict(petition, signature_count)
     data["has_signed"] = has_signed
+    data["official_responses"] = resp_list
     return data
 
 
@@ -177,20 +364,10 @@ def update_petition(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    petition = db.query(Petition).filter(Petition.id == petition_id).first()
-    if not petition:
-        raise HTTPException(status_code=404, detail="Petition not found")
-    if petition.creator_id != current_user.id:
-        raise HTTPException(status_code=403, detail="You can only edit your own petition")
-    if petition.status == PetitionStatus.closed:
-        raise HTTPException(status_code=400, detail="Closed petitions cannot be edited")
-
-    for field, value in payload.model_dump(exclude_unset=True).items():
-        setattr(petition, field, value)
-
-    db.commit()
-    db.refresh(petition)
-    return _build_petition_dict(petition, _get_signature_count(db, petition_id))
+    raise HTTPException(
+        status_code=403,
+        detail="Editing submitted petitions is disabled to preserve civic integrity once published."
+    )
 
 
 # ── Update Petition Status (Officials only) ────────────────────────────────────
@@ -223,16 +400,10 @@ def delete_petition(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    petition = db.query(Petition).filter(Petition.id == petition_id).first()
-    if not petition:
-        raise HTTPException(status_code=404, detail="Petition not found")
-    if petition.creator_id != current_user.id:
-        raise HTTPException(status_code=403, detail="You can only delete your own petition")
-
-    db.query(Signature).filter(Signature.petition_id == petition_id).delete(synchronize_session=False)
-    db.delete(petition)
-    db.commit()
-    return {"message": "Petition deleted successfully"}
+    raise HTTPException(
+        status_code=403,
+        detail="Deleting published petitions is disabled to preserve civic record integrity."
+    )
 
 
 # ── Sign Petition ──────────────────────────────────────────────────────────────
@@ -270,32 +441,26 @@ def sign_petition(
     return {"signature_count": signature_count, "has_signed": True}
 
 
-# ── Withdraw Signature ─────────────────────────────────────────────────────────
+# ── Add Official Response ──────────────────────────────────────────────────────
 
-# @router.delete("/{petition_id}/sign", response_model=SignatureResponse)
-# def withdraw_signature(
-#     petition_id: int,
-#     current_user: User = Depends(get_current_user),
-#     db: Session = Depends(get_db),
-# ):
-#     petition = db.query(Petition).filter(Petition.id == petition_id).first()
-#     if not petition:
-#         raise HTTPException(status_code=404, detail="Petition not found")
+@router.post("/{petition_id}/respond", response_model=OfficialResponseOut, status_code=http_status.HTTP_201_CREATED)
+def add_official_response(
+    petition_id: int,
+    payload: OfficialResponseCreate,
+    current_user: User = Depends(require_official),
+    db: Session = Depends(get_db),
+):
+    petition = db.query(Petition).filter(Petition.id == petition_id).first()
+    if not petition:
+        raise HTTPException(status_code=404, detail="Petition not found")
 
-#     signature = db.query(Signature).filter(
-#         Signature.petition_id == petition_id,
-#         Signature.user_id == current_user.id,
-#     ).first()
-#     if not signature:
-#         raise HTTPException(status_code=404, detail="You have not signed this petition")
-
-#     db.delete(signature)
-#     db.commit()
-
-#     signature_count = _get_signature_count(db, petition_id)
-
-#     if petition.status == PetitionStatus.under_review and signature_count < petition.signature_goal:
-#         petition.status = PetitionStatus.active
-#         db.commit()
-
-#     return {"signature_count": signature_count, "has_signed": False}
+    resp = OfficialResponse(
+        petition_id=petition_id,
+        official_id=current_user.id,
+        response_text=payload.response_text,
+        action_taken=payload.action_taken,
+    )
+    db.add(resp)
+    db.commit()
+    db.refresh(resp)
+    return resp

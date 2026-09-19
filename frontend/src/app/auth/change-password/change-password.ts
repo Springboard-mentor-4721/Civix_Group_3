@@ -81,7 +81,8 @@ export class ChangePassword implements OnInit {
       error: (err) => {
         this.validatingToken = false;
         this.isTokenValid = false;
-        this.errorMessage = err.error?.detail || 'Password change request required. Please request a new password-change link.';
+        const detail = err.error?.detail;
+        this.errorMessage = (typeof detail === 'object' ? detail?.message : detail) || 'Password change request required. Please use the password-change link sent to your registered email.';
         this.cdr.detectChanges();
       }
     });
@@ -161,7 +162,8 @@ export class ChangePassword implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = err.error?.detail || err.error?.message || 'Failed to change password. Please request a new link.';
+        const detail = err.error?.detail;
+        this.errorMessage = (typeof detail === 'object' ? detail?.message : detail) || err.error?.message || 'Failed to change password. Please request a new link.';
         this.cdr.detectChanges();
       }
     });

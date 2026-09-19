@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, ChangeDetectorRef, NgZone, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -13,6 +13,7 @@ import {
 } from '../services/petition';
 import { LocationService } from '../services/location';
 import { Auth, UserResponse } from '../auth/auth';
+import { ActivatedRoute, Router } from '@angular/router';
 
 interface Toast {
   id: number;
@@ -27,9 +28,24 @@ interface Toast {
   templateUrl: './petitions.html',
   styleUrl: './petitions.css'
 })
-export class Petitions implements OnInit {
+export class Petitions implements OnInit, OnDestroy {
   // Page view mode: 'list' | 'create' | 'detail' | 'edit'
   viewMode: 'list' | 'create' | 'detail' | 'edit' = 'list';
+
+  // Petitions Layout Mode: 'grid' (Card View) | 'list' (Compact Row View)
+  layoutMode: 'grid' | 'list' = 'grid';
+
+  setLayoutMode(mode: 'grid' | 'list') {
+    this.layoutMode = mode;
+  }
+
+  // Camera / photo state
+  @ViewChild('petitionVideoEl') petitionVideoEl!: ElementRef<HTMLVideoElement>;
+  @ViewChild('petitionCanvasEl') petitionCanvasEl!: ElementRef<HTMLCanvasElement>;
+  cameraActive = false;
+  capturedPhotos: string[] = [];   // base64 data URLs
+  private cameraStream: MediaStream | null = null;
+  cameraError = '';
 
   // Current user info
   currentUser: UserResponse | null = null;
@@ -39,6 +55,35 @@ export class Petitions implements OnInit {
 
   // Tab: 'explore' | 'mine' | 'signed'
   activeTab: 'explore' | 'mine' | 'signed' = 'explore';
+
+  // CIVIX Glass Splash state
+  showCivixSplash: boolean = false;
+  splashTimer: any = null;
+
+  triggerCivixSplash() {
+    this.showCivixSplash = true;
+    if (this.splashTimer) {
+      clearTimeout(this.splashTimer);
+    }
+    this.splashTimer = setTimeout(() => {
+      this.ngZone.run(() => {
+        this.showCivixSplash = false;
+        this.cdr.detectChanges();
+      });
+    }, 1500);
+  }
+
+  closeCivixSplash() {
+    this.showCivixSplash = false;
+    if (this.splashTimer) {
+      clearTimeout(this.splashTimer);
+    }
+  }
+
+  get victoriesCount(): number {
+    const closed = this.petitions.filter((p) => p.status === 'closed' || p.status === 'under_review').length;
+    return closed > 0 ? closed : 1;
+  }
 
   // Filters
   searchQuery: string = '';
@@ -113,19 +158,44 @@ export class Petitions implements OnInit {
   toasts: Toast[] = [];
   private toastCounter = 0;
 
+  // Photo Zoom Lightbox Modal State
+  zoomedPhotoUrl: string | null = null;
+
+  openPhotoZoom(photoUrl: string, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.zoomedPhotoUrl = photoUrl;
+  }
+
+  closePhotoZoom() {
+    this.zoomedPhotoUrl = null;
+  }
+
   constructor(
     private petitionService: PetitionService,
     private locationService: LocationService,
     private authService: Auth,
+    private route: ActivatedRoute,
+    private router: Router,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
   ) {}
+
+  ngOnDestroy() { this.stopCamera(); }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
     if (!target.closest('.pcard-menu-wrap') && !target.closest('.btn-dot-menu')) {
       this.activeMenuPetitionId = null;
+    }
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onKeydownHandler(event: KeyboardEvent) {
+    if (this.zoomedPhotoUrl) {
+      this.closePhotoZoom();
     }
   }
 
@@ -148,6 +218,31 @@ export class Petitions implements OnInit {
     });
 
     this.loadAllData();
+
+    // Check if deep-link query params contain title slug or id (e.g. ?tab=petitions&title=install-protected-bike-lanes)
+    this.route.queryParams.subscribe((params) => {
+      const titleSlug = params['title'];
+      const id = params['id'];
+
+      if (titleSlug) {
+        this.findAndOpenByTitleSlug(titleSlug);
+      } else if (id) {
+        const petitionId = Number(id);
+        if (petitionId && !isNaN(petitionId)) {
+          this.loadAndOpenPetitionDetail(petitionId);
+        }
+      }
+    });
+  }
+
+  slugify(text: string): string {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 
   loadAllData() {
@@ -273,8 +368,62 @@ export class Petitions implements OnInit {
     this.formSignatureGoal = 100;
     this.formSubmitted = false;
     this.formErrorMessage = '';
+    this.capturedPhotos = [];
+    this.cameraActive = false;
+    this.cameraError = '';
     this.viewMode = 'create';
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  findAndOpenByTitleSlug(slug: string) {
+    if (!slug) return;
+    const cleanSlug = slug.toLowerCase().trim();
+
+    const findMatch = (list: PetitionResponse[]) => {
+      return list.find(
+        (p) => this.slugify(p.title) === cleanSlug || p.title.toLowerCase().trim() === cleanSlug.replace(/-/g, ' ')
+      );
+    };
+
+    const existingMatch = findMatch(this.petitions);
+    if (existingMatch) {
+      this.openDetailPage(existingMatch);
+      return;
+    }
+
+    // If data not loaded in memory yet, fetch list first
+    this.petitionService.getPetitions({ page: 1, per_page: 100 }).subscribe({
+      next: (res) => {
+        this.petitions = res.petitions || [];
+        const match = findMatch(this.petitions);
+        if (match) {
+          this.openDetailPage(match);
+        } else if (!isNaN(Number(slug))) {
+          this.loadAndOpenPetitionDetail(Number(slug));
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  loadAndOpenPetitionDetail(id: number) {
+    this.loadingDetail = true;
+    this.viewMode = 'detail';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    this.petitionService.getPetition(id).subscribe({
+      next: (detail) => {
+        this.selectedPetition = detail;
+        this.selectedOfficialStatus = detail.status;
+        this.loadingDetail = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loadingDetail = false;
+        this.showToast('Petition not found', 'error');
+        this.backToList();
+      }
+    });
   }
 
   openDetailPage(petition: PetitionResponse, event?: Event) {
@@ -293,6 +442,15 @@ export class Petitions implements OnInit {
       has_signed: this.signedPetitionIds.has(petition.id)
     };
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const titleSlug = this.slugify(petition.title);
+
+    // Sync title slug into browser URL without page reload
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: 'petitions', title: titleSlug, id: null },
+      queryParamsHandling: 'merge'
+    });
 
     this.petitionService.getPetition(petition.id).subscribe({
       next: (detail) => {
@@ -331,6 +489,15 @@ export class Petitions implements OnInit {
   backToList() {
     this.viewMode = 'list';
     this.activeMenuPetitionId = null;
+    this.selectedPetition = null;
+
+    // Clear title and id query params
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: 'petitions', title: null, id: null },
+      queryParamsHandling: 'merge'
+    });
+
     this.loadAllData();
   }
 
@@ -343,6 +510,58 @@ export class Petitions implements OnInit {
     } else {
       this.activeMenuPetitionId = petitionId;
     }
+  }
+
+  // ── Camera Methods ─────────────────────────────────────────────────────────
+
+  startCamera() {
+    this.cameraError = '';
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 1280, height: 720 } })
+      .then(stream => {
+        this.cameraStream = stream;
+        this.cameraActive = true;
+        this.cdr.detectChanges();
+        setTimeout(() => {
+          if (this.petitionVideoEl?.nativeElement) {
+            this.petitionVideoEl.nativeElement.srcObject = stream;
+          }
+        }, 100);
+      })
+      .catch(() => {
+        this.cameraError = 'Camera access denied. Please allow camera access.';
+        this.cdr.detectChanges();
+      });
+  }
+
+  capturePhoto() {
+    if (this.capturedPhotos.length >= 5) {
+      this.cameraError = 'Maximum 5 photos allowed.';
+      return;
+    }
+    const video  = this.petitionVideoEl?.nativeElement;
+    const canvas = this.petitionCanvasEl?.nativeElement;
+    if (!video || !canvas) return;
+    canvas.width  = video.videoWidth  || 1280;
+    canvas.height = video.videoHeight || 720;
+    canvas.getContext('2d')!.drawImage(video, 0, 0, canvas.width, canvas.height);
+    this.capturedPhotos.push(canvas.toDataURL('image/jpeg', 0.85));
+    this.cdr.detectChanges();
+  }
+
+  removePhoto(index: number) {
+    this.capturedPhotos.splice(index, 1);
+    this.cdr.detectChanges();
+  }
+
+  stopCamera() {
+    this.cameraStream?.getTracks().forEach(t => t.stop());
+    this.cameraStream = null;
+    this.cameraActive = false;
+  }
+
+  closeCamera() {
+    this.stopCamera();
+    this.cdr.detectChanges();
   }
 
   // ── Location Detection ─────────────────────────────────────────────────────
@@ -372,22 +591,11 @@ export class Petitions implements OnInit {
     this.formSubmitted = true;
     this.formErrorMessage = '';
 
-    if (!this.formTitle.trim()) {
-      this.formErrorMessage = 'Title is required.';
-      return;
-    }
-    if (!this.formDescription.trim()) {
-      this.formErrorMessage = 'Description is required.';
-      return;
-    }
-    if (!this.formLocation.trim()) {
-      this.formErrorMessage = 'Location is required.';
-      return;
-    }
-    if (!this.formSignatureGoal || this.formSignatureGoal <= 0) {
-      this.formErrorMessage = 'Signature goal must be at least 1.';
-      return;
-    }
+    if (!this.formTitle.trim()) { this.formErrorMessage = 'Title is required.'; return; }
+    if (!this.formDescription.trim()) { this.formErrorMessage = 'Description is required.'; return; }
+    if (!this.formLocation.trim()) { this.formErrorMessage = 'Location is required.'; return; }
+    if (!this.formSignatureGoal || this.formSignatureGoal <= 0) { this.formErrorMessage = 'Signature goal must be at least 1.'; return; }
+    if (this.capturedPhotos.length < 3) { this.formErrorMessage = 'Please capture at least 3 photos using the camera.'; return; }
 
     this.formSubmitting = true;
     const payload: PetitionCreate = {
@@ -395,12 +603,15 @@ export class Petitions implements OnInit {
       description: this.formDescription.trim(),
       category: this.formCategory,
       location: this.formLocation.trim(),
-      signature_goal: Number(this.formSignatureGoal)
+      signature_goal: Number(this.formSignatureGoal),
+      photos: this.capturedPhotos,
     };
 
     this.petitionService.createPetition(payload).subscribe({
       next: (created) => {
         this.formSubmitting = false;
+        this.stopCamera();
+        this.capturedPhotos = [];
         this.showToast('Petition published successfully!', 'success');
         this.viewMode = 'list';
         this.loadAllData();
@@ -566,7 +777,8 @@ export class Petitions implements OnInit {
   sharePetition(p: PetitionResponse, event?: Event) {
     if (event) event.stopPropagation();
     this.activeMenuPetitionId = null;
-    const shareUrl = `${window.location.origin}/dashboard?tab=petitions&id=${p.id}`;
+    const titleSlug = this.slugify(p.title);
+    const shareUrl = `${window.location.origin}/petitions?tab=petitions&title=${titleSlug}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shareUrl);
       this.showToast('Petition link copied to clipboard!', 'success');

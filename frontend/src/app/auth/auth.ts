@@ -1,25 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap, catchError, of } from 'rxjs';
 import { environment } from '../../environments/environment';
-
-export interface UserRegister {
-  name: string;
-  email: string;
-  password: string;
-  role: 'citizen' | 'official';
-  location: string;
-}
-
-export interface UserLogin {
-  email: string;
-  password: string;
-}
-
-export interface TokenResponse {
-  access_token: string;
-  token_type: string;
-}
 
 export interface UserResponse {
   id: number;
@@ -27,169 +9,128 @@ export interface UserResponse {
   email: string;
   role: 'citizen' | 'official';
   location: string | null;
-  is_verified: boolean;
-  verification_status: 'not_required' | 'pending' | 'verified' | 'rejected';
+  department: string | null;
+  department_id: string | null;
+  email_verified: boolean;
+  face_verified: boolean;
+  must_change_password: boolean;
+  profile_picture_url: string | null;
   created_at: string;
   updated_at: string;
-  email_verified_at: string | null;
 }
 
-export interface UserUpdate {
-  name?: string;
-  location?: string;
-}
-
-export interface ForgotPasswordRequest {
-  email: string;
-}
-
-export interface ResetPasswordRequest {
-  token: string;
-  new_password: string;
-}
-
-export interface ResendVerificationRequest {
-  email: string;
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  must_change_password: boolean;
 }
 
 export interface MessageResponse {
   message: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+export interface ValidateTokenResponse {
+  email: string;
+}
+
+@Injectable({ providedIn: 'root' })
 export class Auth {
   private readonly baseUrl = `${environment.apiUrl}/api/auth`;
   private readonly tokenKey = 'civix_token';
-  private readonly userKey = 'civix_user';
+  private readonly userKey  = 'civix_user';
 
-  private currentUserSubject = new BehaviorSubject<UserResponse | null>(this.getStoredUser());
+  private currentUserSubject = new BehaviorSubject<UserResponse | null>(this._storedUser());
   public currentUser$ = this.currentUserSubject.asObservable();
-
-  private tokenSubject = new BehaviorSubject<string | null>(this.getToken());
-  public token$ = this.tokenSubject.asObservable();
 
   constructor(private http: HttpClient) {}
 
-  // 1. Register Citizen or Official
-  register(data: UserRegister): Observable<UserResponse> {
-    return this.http.post<UserResponse>(`${this.baseUrl}/register`, data);
+  registerCitizen(data: { name: string; email: string; password: string; location: string }): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.baseUrl}/register/citizen`, data);
   }
 
-  // 2. Login User & obtain JWT Token
-  login(data: UserLogin): Observable<TokenResponse> {
+  registerOfficial(data: { name: string; email: string; password: string; location: string; department: string }): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.baseUrl}/register/official`, data);
+  }
+
+  login(data: { email: string; password: string }): Observable<TokenResponse> {
     return this.http.post<TokenResponse>(`${this.baseUrl}/login`, data).pipe(
-      tap((tokenRes) => {
-        if (tokenRes && tokenRes.access_token) {
-          this.setToken(tokenRes.access_token);
-        }
-      })
+      tap(res => { if (res?.access_token) this.setToken(res.access_token); })
     );
   }
 
-  // 3. Get Authenticated User Details (/api/auth/me)
   getMe(): Observable<UserResponse> {
     return this.http.get<UserResponse>(`${this.baseUrl}/me`).pipe(
-      tap((user) => {
-        this.setUser(user);
-      })
+      tap(user => this.setUser(user))
     );
   }
 
-  // 4. Update Current User Profile (/api/auth/me)
-  updateMe(data: UserUpdate): Observable<UserResponse> {
+  updateMe(data: { name?: string; location?: string }): Observable<UserResponse> {
     return this.http.put<UserResponse>(`${this.baseUrl}/me`, data).pipe(
-      tap((updatedUser) => {
-        this.setUser(updatedUser);
-      })
+      tap(user => this.setUser(user))
     );
   }
 
-  // 5. Logout User on Server and clear state
   logout(): Observable<any> {
-    const token = this.getToken();
-    const headers = token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : undefined;
-    
-    return this.http.post(`${this.baseUrl}/logout`, {}, { headers }).pipe(
+    return this.http.post(`${this.baseUrl}/logout`, {}).pipe(
       tap(() => this.clearSession()),
-      catchError(() => {
-        // Even if server invalidation fails (e.g. offline), clear local session
-        this.clearSession();
-        return of({ message: 'Logged out locally' });
-      })
+      catchError(() => { this.clearSession(); return of({}); })
     );
   }
 
-  // 6. Verify Email using Token
   verifyEmail(token: string): Observable<MessageResponse> {
     return this.http.get<MessageResponse>(`${this.baseUrl}/verify-email?token=${encodeURIComponent(token)}`);
   }
 
-  // 7. Resend Email Verification Token
   resendVerification(email: string): Observable<MessageResponse> {
     return this.http.post<MessageResponse>(`${this.baseUrl}/resend-verification`, { email });
   }
 
-  // 8. Request Password Reset Link
+  faceVerification(email: string, image: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.baseUrl}/face-verification`, { email, image });
+  }
+
+  requestPasswordChange(email: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.baseUrl}/request-password-change`, { email });
+  }
+
+  validatePasswordToken(token: string): Observable<ValidateTokenResponse> {
+    return this.http.post<ValidateTokenResponse>(`${this.baseUrl}/validate-password-token`, { token });
+  }
+
+  changePasswordWithToken(token: string, new_password: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.baseUrl}/change-password`, { token, new_password });
+  }
+
+  // Legacy — kept for forgot-password page compatibility
   forgotPassword(email: string): Observable<MessageResponse> {
-    return this.http.post<MessageResponse>(`${this.baseUrl}/forgot-password`, { email });
+    return this.requestPasswordChange(email);
   }
 
-  // 9. Reset Password with Token
-  resetPassword(token: string, new_password: string): Observable<MessageResponse> {
-    return this.http.post<MessageResponse>(`${this.baseUrl}/reset-password`, { token, new_password });
-  }
+  // ── Session helpers ──────────────────────────────────────────────────────────
 
-  // ── Session & Storage Helpers ────────────────────────────────────────────────
+  getToken(): string | null { return localStorage.getItem(this.tokenKey); }
 
-  public getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
-  }
+  setToken(token: string): void { localStorage.setItem(this.tokenKey, token); }
 
-  public setToken(token: string): void {
-    localStorage.setItem(this.tokenKey, token);
-    this.tokenSubject.next(token);
-  }
+  getUser(): UserResponse | null { return this.currentUserSubject.value; }
 
-  public getUser(): UserResponse | null {
-    return this.currentUserSubject.value;
-  }
-
-  public setUser(user: UserResponse): void {
+  setUser(user: UserResponse): void {
     localStorage.setItem(this.userKey, JSON.stringify(user));
-    // Also keep legacy 'user' key synchronized for compatibility
-    localStorage.setItem('user', JSON.stringify({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      location: user.location || '',
-      is_verified: user.is_verified,
-      verification_status: user.verification_status
-    }));
     this.currentUserSubject.next(user);
   }
 
-  private getStoredUser(): UserResponse | null {
-    const raw = localStorage.getItem(this.userKey) || localStorage.getItem('user');
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw) as UserResponse;
-    } catch {
-      return null;
-    }
-  }
-
-  public clearSession(): void {
+  clearSession(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
     localStorage.removeItem('user');
     this.currentUserSubject.next(null);
-    this.tokenSubject.next(null);
   }
 
-  public isAuthenticated(): boolean {
-    return !!this.getToken();
+  isAuthenticated(): boolean { return !!this.getToken(); }
+
+  private _storedUser(): UserResponse | null {
+    const raw = localStorage.getItem(this.userKey) || localStorage.getItem('user');
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch { return null; }
   }
 }

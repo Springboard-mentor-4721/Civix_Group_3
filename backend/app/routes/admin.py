@@ -61,11 +61,16 @@ def _sig_count(db: Session, petition_id: int) -> int:
 
 
 def _build_petition(p: Petition, sig_count: int) -> dict:
+    try:
+        photos_data = [{"id": photo.id, "url": photo.url} for photo in (p.photos or [])]
+    except Exception:
+        photos_data = []
     return {
         "id": p.id, "title": p.title, "description": p.description,
         "category": p.category, "location": p.location, "status": p.status,
         "signature_goal": p.signature_goal, "signature_count": sig_count,
         "creator_id": p.creator_id, "created_at": p.created_at, "updated_at": p.updated_at,
+        "photos": photos_data,
     }
 
 

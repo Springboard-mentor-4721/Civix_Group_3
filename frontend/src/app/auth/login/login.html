@@ -1,16 +1,14 @@
 <div class="auth-root">
 
   <nav class="auth-navbar">
-    <div class="nb-brand">
+    <div class="nb-brand" style="display:flex; align-items:center; gap:10px;">
+      <img src="/LOGO.png" alt="CIVIX Logo" style="height:36px; width:auto; object-fit:contain;" />
       <div class="nb-wordmark">
         <span class="nb-name">CIVIX</span>
         <span class="nb-slogan">Your Voice. Your City.</span>
       </div>
     </div>
     <div class="nb-links">
-      <a href="#" class="nb-link">How It Works</a>
-      <a href="#" class="nb-link">About</a>
-      <a href="#" class="nb-link">Contact</a>
       <a routerLink="/register" class="nb-cta">Register</a>
     </div>
   </nav>
@@ -36,7 +34,7 @@
           <rect x="340" y="134" width="28" height="86" rx="3" fill="rgba(255,255,255,0.12)"/>
           <!-- Ground line -->
           <rect x="0" y="218" width="380" height="2" rx="1" fill="rgba(255,255,255,0.2)"/>
-          <!-- Central civic hall -->
+          <!-- Central CIVIX hall -->
           <rect x="148" y="82" width="84" height="138" rx="5" fill="rgba(255,255,255,0.18)"/>
           <rect x="156" y="66" width="68" height="18" rx="3" fill="rgba(255,255,255,0.25)"/>
           <polygon points="190,40 156,66 224,66" fill="rgba(255,255,255,0.3)"/>
@@ -79,7 +77,7 @@
 
         <div class="al-chip">
           <span class="al-chip-dot"></span>
-          Civic Tech Platform
+          CIVIX Tech Platform
         </div>
         <h1 class="al-title">Your Voice.<br><span class="grad">Your City.</span></h1>
         <p class="al-sub">Sign petitions, vote on local issues, and hold your representatives accountable - all in one place.</p>
@@ -97,7 +95,7 @@
 
         <div class="ac-heading">
           <h2>Welcome back</h2>
-          <p>Sign in to access your civic dashboard.</p>
+          <!-- <p>Sign in to access your CIVIX dashboard.</p> -->
         </div>
 
         <!-- Account Lockout Banner -->
@@ -175,15 +173,7 @@
   </div>
 
   <footer class="auth-footer">
-    <div class="af-inner">
-      <div class="af-links">
-        <a routerLink="/how-it-works">How It Works</a>
-        <a routerLink="/about">About</a>
-        <a routerLink="/privacy-policy">Privacy Policy</a>
-        <a routerLink="/terms-of-use">Terms of Use</a>
-        <a routerLink="/contact">Contact</a>
-        <a routerLink="/help-center">Help Center</a>
-      </div>
+    <div class="af-inner" style="justify-content:center;">
       <span class="af-copy">&copy; 2026 Civix. All rights reserved.</span>
     </div>
   </footer>

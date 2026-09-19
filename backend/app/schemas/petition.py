@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from typing import Optional
@@ -18,6 +19,8 @@ class PetitionCategory(str, Enum):
 class PetitionStatus(str, Enum):
     active = "active"
     under_review = "under_review"
+    in_progress = "in_progress"
+    resolved = "resolved"
     closed = "closed"
 
 
@@ -27,6 +30,7 @@ class PetitionCreate(BaseModel):
     category: PetitionCategory
     location: str = Field(..., min_length=1, max_length=100)
     signature_goal: int = Field(..., gt=0)
+    photos: list[str] = Field(..., min_length=3, max_length=5, description="List of 3-5 base64 image data URLs")
 
 
 class PetitionUpdate(BaseModel):
@@ -41,6 +45,28 @@ class PetitionStatusUpdate(BaseModel):
     status: PetitionStatus
 
 
+class PetitionPhotoOut(BaseModel):
+    id: int
+    url: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+class OfficialResponseCreate(BaseModel):
+    response_text: str = Field(..., min_length=1)
+    action_taken: Optional[str] = None
+
+
+class OfficialResponseOut(BaseModel):
+    id: int
+    petition_id: int
+    official_id: int
+    response_text: str
+    action_taken: Optional[str]
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class PetitionResponse(BaseModel):
     id: int
     title: str
@@ -51,14 +77,18 @@ class PetitionResponse(BaseModel):
     signature_goal: int
     signature_count: int
     creator_id: int
+    creator_name: Optional[str] = None
+    creator_profile_picture_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    photos: list[PetitionPhotoOut] = []
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class PetitionDetailResponse(PetitionResponse):
     has_signed: bool = False
+    official_responses: list[OfficialResponseOut] = []
 
 
 class PetitionListResponse(BaseModel):
@@ -82,3 +112,15 @@ class MyPetitionsResponse(BaseModel):
     total: int
     active_count: int
     closed_count: int
+
+
+class DashboardStats(BaseModel):
+    total_petitions: int
+    active: int
+    under_review: int
+    in_progress: int
+    resolved: int
+    closed: int
+    total_signatures: int
+    department: str
+    jurisdiction: str

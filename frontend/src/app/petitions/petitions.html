@@ -25,38 +25,7 @@
       </div>
     </div>
 
-    <!-- Metric Stats -->
-    <div class="pet-stats-grid">
-      <div class="pstat-card" (click)="setTab('explore')">
-        <div class="pstat-icon bg-teal">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        </div>
-        <div class="pstat-content">
-          <span class="pstat-num">{{ totalCount }}</span>
-          <span class="pstat-label">Total Petitions</span>
-        </div>
-      </div>
 
-      <div class="pstat-card" (click)="setTab('mine')">
-        <div class="pstat-icon bg-blue">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        </div>
-        <div class="pstat-content">
-          <span class="pstat-num">{{ myPetitions.length }}</span>
-          <span class="pstat-label">My Petitions ({{ myActiveCount }} active)</span>
-        </div>
-      </div>
-
-      <div class="pstat-card" (click)="setTab('signed')">
-        <div class="pstat-icon bg-emerald">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        </div>
-        <div class="pstat-content">
-          <span class="pstat-num">{{ signedPetitions.length }}</span>
-          <span class="pstat-label">Signed by Me</span>
-        </div>
-      </div>
-    </div>
 
     <!-- Main Tabs & Toolbar -->
     <div class="pet-controls">
@@ -73,6 +42,18 @@
           <span>Signed by Me</span>
           <span class="ptab-count">{{ signedPetitions.length }}</span>
         </button>
+
+        <!-- View Mode Switcher (Grid vs List Layout) -->
+        <div class="pet-view-switcher" style="margin-left:auto; display:inline-flex; align-items:center; gap:2px; background:#f1f5f9; padding:3px; border-radius:8px; border:1px solid #e2e8f0;">
+          <button type="button" class="vswitch-btn" [class.active]="layoutMode === 'grid'" (click)="setLayoutMode('grid')" title="Grid Card View">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+            <span style="font-size:11.5px; font-weight:700;">Grid</span>
+          </button>
+          <button type="button" class="vswitch-btn" [class.active]="layoutMode === 'list'" (click)="setLayoutMode('list')" title="Compact List View">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            <span style="font-size:11.5px; font-weight:700;">List</span>
+          </button>
+        </div>
       </div>
 
       <!-- Search & Status Row -->
@@ -143,8 +124,8 @@
         </button>
       </div>
 
-      <!-- Cards Grid -->
-      <div class="pet-grid" *ngIf="!loading && displayedPetitions.length > 0">
+      <!-- Cards Grid (Grid Mode) -->
+      <div class="pet-grid" *ngIf="!loading && displayedPetitions.length > 0 && layoutMode === 'grid'">
         <div
           class="pet-card"
           *ngFor="let p of displayedPetitions"
@@ -176,26 +157,6 @@
                   <button class="pcd-item" (click)="sharePetition(p, $event)">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                     <span>Share Link</span>
-                  </button>
-
-                  <button
-                    *ngIf="p.creator_id === currentUserId && p.status !== 'closed'"
-                    class="pcd-item"
-                    (click)="openEditPage(p, $event)"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    <span>Edit Petition</span>
-                  </button>
-
-                  <div class="pcd-divider" *ngIf="p.creator_id === currentUserId"></div>
-
-                  <button
-                    *ngIf="p.creator_id === currentUserId"
-                    class="pcd-item danger"
-                    (click)="promptDelete(p, $event)"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                    <span>Delete</span>
                   </button>
                 </div>
               </div>
@@ -245,7 +206,8 @@
                 class="btn-signed"
                 disabled
               >
-                &#10003; Signed
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Signed</span>
               </button>
 
               <button
@@ -255,6 +217,7 @@
                 (click)="signPetition(p, $event)"
               >
                 <span *ngIf="signingPetitionId === p.id" class="mini-spin"></span>
+                <svg *ngIf="signingPetitionId !== p.id" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="sign-btn-icon"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                 <span>{{ signingPetitionId === p.id ? 'Signing...' : 'Sign Petition' }}</span>
               </button>
 
@@ -266,6 +229,71 @@
                 View &rarr;
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compact List View (List Mode) -->
+      <div class="pet-list-view" *ngIf="!loading && displayedPetitions.length > 0 && layoutMode === 'list'">
+        <div
+          class="pet-list-row"
+          *ngFor="let p of displayedPetitions"
+          (click)="openDetailPage(p, $event)"
+        >
+          <div class="plr-left">
+            <div class="plr-tags">
+              <span class="pcard-cat" [ngClass]="getCategoryColor(p.category)">{{ p.category }}</span>
+              <span class="pcard-status" [ngClass]="'status-' + p.status">
+                <span class="status-dot"></span>
+                {{ getStatusLabel(p.status) }}
+              </span>
+              <span class="pcard-creator-tag" *ngIf="p.creator_id === currentUserId">You</span>
+            </div>
+            <h4 class="plr-title">{{ p.title }}</h4>
+            <div class="plr-meta">
+              <span style="display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {{ p.location }}</span>
+              <span class="plr-sep">&bull;</span>
+              <span>{{ p.created_at | date:'mediumDate' }}</span>
+            </div>
+          </div>
+
+          <div class="plr-progress">
+            <div class="pcard-pbar-bg" style="width:110px;">
+              <div
+                class="pcard-pbar-fill"
+                [style.width.%]="getProgressPercentage(p.signature_count, p.signature_goal)"
+                [class.goal-met]="p.signature_count >= p.signature_goal"
+              ></div>
+            </div>
+            <span class="plr-sig-text">
+              <strong>{{ p.signature_count }}</strong> / {{ p.signature_goal }}
+            </span>
+          </div>
+
+          <div class="plr-actions" (click)="$event.stopPropagation()">
+            <button
+              *ngIf="p.creator_id !== currentUserId && hasUserSigned(p.id)"
+              class="btn-signed"
+              disabled
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Signed</span>
+            </button>
+
+            <button
+              *ngIf="p.creator_id !== currentUserId && !hasUserSigned(p.id) && p.status === 'active'"
+              class="btn-sign"
+              [disabled]="signingPetitionId === p.id"
+              (click)="signPetition(p, $event)"
+            >
+              <span *ngIf="signingPetitionId === p.id" class="mini-spin"></span>
+              <svg *ngIf="signingPetitionId !== p.id" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="sign-btn-icon"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+              <span>{{ signingPetitionId === p.id ? 'Signing...' : 'Sign' }}</span>
+            </button>
+
+            <button class="btn-card-view" (click)="openDetailPage(p, $event)">
+              View &rarr;
+            </button>
           </div>
         </div>
       </div>
@@ -290,9 +318,8 @@
 
     <div class="pet-form-card">
       <div class="pfc-header">
-        <div class="pfc-badge">Step 1 of 1 &bull; Public Proposal</div>
-        <h2>Start a Community Petition</h2>
-        <p>Draft your proposal with clear demands to rally citizen support and official municipal review.</p>
+        <h2>Start a Petition</h2>
+        <p>File a community proposal for municipal action.</p>
       </div>
 
       <div class="form-error-banner" *ngIf="formErrorMessage">
@@ -305,7 +332,7 @@
         <div class="form-block">
           <div class="flabel-row">
             <label>Petition Title <span class="req">*</span></label>
-            <span class="char-count">{{ formTitle.length }} / 200</span>
+            <span class="char-count">{{ formTitle.length }}/200</span>
           </div>
           <div class="finp-wrap" [class.invalid-wrap]="formSubmitted && !formTitle.trim()">
             <input
@@ -313,29 +340,27 @@
               [(ngModel)]="formTitle"
               name="formTitle"
               maxlength="200"
-              placeholder="e.g., Install Protected Bike Lanes and Safer Crossings on 5th Avenue"
+              placeholder="e.g., Install Safer Pedestrian Crossing on Main Street"
               required
             />
           </div>
-          <span class="fhint">Write a clear, specific title describing what change is needed.</span>
-          <div class="ferror-msg" *ngIf="formSubmitted && !formTitle.trim()">Petition title is required</div>
+          <div class="ferror-msg" *ngIf="formSubmitted && !formTitle.trim()">Title is required</div>
         </div>
 
         <!-- Category & Location Row -->
         <div class="form-grid-2">
           <div class="form-block">
-            <label>Issue Category <span class="req">*</span></label>
+            <label>Category <span class="req">*</span></label>
             <div class="finp-wrap">
               <select [(ngModel)]="formCategory" name="formCategory" required>
                 <option *ngFor="let cat of allCategories.slice(1)" [value]="cat">{{ cat }}</option>
               </select>
             </div>
-            <span class="fhint">Helps route this petition to relevant municipal departments.</span>
           </div>
 
           <div class="form-block">
             <div class="flabel-row">
-              <label>City / Jurisdiction <span class="req">*</span></label>
+              <label>City / Locality <span class="req">*</span></label>
               <button
                 type="button"
                 class="btn-autoloc-page"
@@ -351,18 +376,17 @@
                 type="text"
                 [(ngModel)]="formLocation"
                 name="formLocation"
-                placeholder="e.g., Downtown District, Metro City"
+                placeholder="e.g., City Center, Ward 5"
                 required
               />
             </div>
-            <span class="fhint">Target locality where this petition applies.</span>
             <div class="ferror-msg" *ngIf="formSubmitted && !formLocation.trim()">Location is required</div>
           </div>
         </div>
 
         <!-- Signature Goal -->
         <div class="form-block">
-          <label>Target Signature Goal <span class="req">*</span></label>
+          <label>Target Signatures <span class="req">*</span></label>
           <div class="finp-wrap" [class.invalid-wrap]="formSubmitted && (!formSignatureGoal || formSignatureGoal <= 0)">
             <input
               type="number"
@@ -374,24 +398,126 @@
               required
             />
           </div>
-          <span class="fhint">Number of verified signatures required to submit for official council review.</span>
-          <div class="ferror-msg" *ngIf="formSubmitted && (!formSignatureGoal || formSignatureGoal <= 0)">Valid signature goal is required (min 1)</div>
+          <div class="ferror-msg" *ngIf="formSubmitted && (!formSignatureGoal || formSignatureGoal <= 0)">Goal must be at least 1</div>
         </div>
 
         <!-- Detailed Description -->
         <div class="form-block">
-          <label>Detailed Description & Objectives <span class="req">*</span></label>
+          <label>Description <span class="req">*</span></label>
           <div class="finp-wrap" [class.invalid-wrap]="formSubmitted && !formDescription.trim()">
             <textarea
               [(ngModel)]="formDescription"
               name="formDescription"
-              rows="7"
-              placeholder="Describe the problem, the impacted neighborhoods, why current measures are insufficient, and the exact steps municipal authorities should take..."
+              rows="5"
+              placeholder="Describe the issue, impacted area, and proposed solution..."
               required
             ></textarea>
           </div>
-          <span class="fhint">Be detailed and respectful. Clear context increases community engagement.</span>
           <div class="ferror-msg" *ngIf="formSubmitted && !formDescription.trim()">Description is required</div>
+        </div>
+
+        <!-- Live Camera Evidence Capture (Min 3, Max 5 required) -->
+        <div class="form-block cam-evidence-block">
+          <div class="cam-evidence-header">
+            <div class="ceh-left">
+              <span class="ceh-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </span>
+              <div>
+                <h4 class="ceh-title">Live Site Photos <span class="req">*</span></h4>
+                <p class="ceh-sub">Min 3, Max 5 live camera photos required.</p>
+              </div>
+            </div>
+
+            <!-- Counter Pill -->
+            <div class="ceh-counter-pill" [class.valid-counter]="capturedPhotos.length >= 3">
+              <span class="pdot" [class.pdot-valid]="capturedPhotos.length >= 3"></span>
+              <span>{{ capturedPhotos.length }} / 5 Photos</span>
+            </div>
+          </div>
+
+          <!-- Camera Container Card -->
+          <div class="cam-card-container">
+
+            <!-- 1. INACTIVE STATE: Launch Camera Banner -->
+            <div *ngIf="!cameraActive" class="cam-inactive-banner">
+              <div class="cib-icon-wrap">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </div>
+              <button type="button" class="btn-launch-cam" (click)="startCamera()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span>Open Camera</span>
+              </button>
+            </div>
+
+            <!-- 2. ACTIVE STATE: Live Viewfinder HUD -->
+            <div *ngIf="cameraActive" class="cam-active-viewfinder">
+              <!-- Viewfinder HUD Overlays -->
+              <div class="cam-hud-header">
+                <span class="cam-live-indicator">
+                  <span class="red-pulse-dot"></span> LIVE
+                </span>
+                <span class="cam-count-tag">{{ capturedPhotos.length }} / 5 Captured</span>
+              </div>
+
+              <!-- Reticle Corner Target Lines -->
+              <div class="reticle reticle-tl"></div>
+              <div class="reticle reticle-tr"></div>
+              <div class="reticle reticle-bl"></div>
+              <div class="reticle reticle-br"></div>
+
+              <!-- Video Element -->
+              <video #petitionVideoEl autoplay playsinline class="cam-video-feed"></video>
+              <canvas #petitionCanvasEl style="display:none;"></canvas>
+
+              <!-- Bottom Floating HUD Control Strip -->
+              <div class="cam-hud-footer">
+                <button
+                  type="button"
+                  class="btn-shutter-snap"
+                  (click)="capturePhoto()"
+                  [disabled]="capturedPhotos.length >= 5"
+                  title="Snap Photo"
+                >
+                  <span class="shutter-inner"></span>
+                  <span class="shutter-label">SNAP</span>
+                </button>
+
+                <button type="button" class="btn-stop-cam-hud" (click)="stopCamera()">
+                  Done
+                </button>
+              </div>
+            </div>
+
+            <!-- Error Banner inside Camera Card -->
+            <div *ngIf="cameraError" class="cam-error-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>{{ cameraError }}</span>
+            </div>
+          </div>
+
+          <!-- Captured Photo Thumbnails Gallery -->
+          <div class="captured-gallery-wrapper" *ngIf="capturedPhotos.length > 0">
+            <div class="gallery-title-row">
+              <span class="gtr-label">Captured Photos ({{ capturedPhotos.length }})</span>
+              <span class="gtr-status-emerald" *ngIf="capturedPhotos.length >= 3">&#10003; Min 3 photos ready</span>
+              <span class="gtr-status-amber" *ngIf="capturedPhotos.length < 3">Need {{ 3 - capturedPhotos.length }} more</span>
+            </div>
+
+            <div class="captured-gallery-grid">
+              <div *ngFor="let photo of capturedPhotos; let i = index" class="captured-photo-card" (click)="openPhotoZoom(photo, $event)" style="cursor:pointer;" title="Click to Zoom">
+                <img [src]="photo" alt="Evidence photo" />
+                <div class="cpc-overlay">
+                  <span class="cpc-badge">#{{ i + 1 }}</span>
+                  <button type="button" class="btn-del-photo" (click)="removePhoto(i); $event.stopPropagation()" title="Delete photo">&times;</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ferror-msg" *ngIf="formSubmitted && capturedPhotos.length < 3">
+            At least 3 live photos required.
+          </div>
         </div>
 
         <!-- Submit Row -->
@@ -436,26 +562,6 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
               <span>Share Link</span>
             </button>
-
-            <button
-              *ngIf="selectedPetition.creator_id === currentUserId && selectedPetition.status !== 'closed'"
-              class="pcd-item"
-              (click)="openEditPage(selectedPetition, $event)"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              <span>Edit Petition</span>
-            </button>
-
-            <div class="pcd-divider" *ngIf="selectedPetition.creator_id === currentUserId"></div>
-
-            <button
-              *ngIf="selectedPetition.creator_id === currentUserId"
-              class="pcd-item danger"
-              (click)="promptDelete(selectedPetition, $event)"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-              <span>Delete</span>
-            </button>
           </div>
         </div>
       </div>
@@ -497,6 +603,38 @@
           <h3>About This Petition</h3>
           <div class="pdetail-desc">
             {{ selectedPetition.description }}
+          </div>
+        </div>
+
+        <!-- Complaint Evidence Photos Card -->
+        <div class="pdetail-card" *ngIf="selectedPetition.photos && selectedPetition.photos.length > 0">
+          <h3>Complaint Evidence Photos ({{ selectedPetition.photos.length }})</h3>
+          <div class="pdetail-photos-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:12px; margin-top:12px;">
+            <div *ngFor="let photo of selectedPetition.photos" class="pdetail-photo-item" (click)="openPhotoZoom(photo.url, $event)" title="Click to view large image" style="aspect-ratio:4/3; border-radius:10px; overflow:hidden; border:1px solid #cbd5e1; background:#f8fafc; cursor:pointer; position:relative;">
+              <img [src]="photo.url" style="width:100%; height:100%; object-fit:cover; transition:transform 0.2s ease;" class="pdetail-photo-img" />
+              <div class="photo-zoom-hint">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Official Responses & Municipal Updates Card (Visible to Citizens & Officials) -->
+        <div class="pdetail-card" *ngIf="selectedPetition.official_responses && selectedPetition.official_responses.length > 0" style="background:#f0fdfa; border:1px solid #99f6e4;">
+          <h3 style="color:#0f766e; display:flex; align-items:center; gap:8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Official Responses & Updates ({{ selectedPetition.official_responses.length }})
+          </h3>
+          <div class="official-responses-list" style="margin-top:14px; display:flex; flex-direction:column; gap:12px;">
+            <div *ngFor="let resp of selectedPetition.official_responses" class="official-response-box" style="background:#ffffff; border-radius:10px; padding:14px 16px; border:1px solid #cbd5e1; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+              <div style="font-size:14px; color:#1e293b; line-height:1.5; white-space:pre-wrap;">{{ resp.response_text }}</div>
+              <div *ngIf="resp.action_taken" style="margin-top:8px; font-size:12.5px; font-weight:600; color:#0f766e; background:#f0fdfa; padding:6px 10px; border-radius:6px; display:inline-block;">
+                Action Taken: {{ resp.action_taken }}
+              </div>
+              <div style="margin-top:8px; font-size:11px; color:#64748b; text-align:right;">
+                Issued: {{ resp.created_at | date:'medium' }}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -554,7 +692,8 @@
               class="btn-side-signed"
               disabled
             >
-              &#10003; You Signed this Petition
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Signed by You</span>
             </button>
 
             <button
@@ -564,7 +703,8 @@
               (click)="signPetition(selectedPetition)"
             >
               <span *ngIf="signingPetitionId === selectedPetition.id" class="mini-spin"></span>
-              <span>{{ signingPetitionId === selectedPetition.id ? 'Signing...' : 'Sign this Petition' }}</span>
+              <svg *ngIf="signingPetitionId !== selectedPetition.id" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="sign-btn-icon"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+              <span>{{ signingPetitionId === selectedPetition.id ? 'Signing Proposal...' : 'Sign this Petition' }}</span>
             </button>
 
             <div *ngIf="selectedPetition.creator_id === currentUserId" class="pside-creator-note">
@@ -709,6 +849,37 @@
       </span>
       <span class="toast-text">{{ t.message }}</span>
       <button class="toast-close" (click)="removeToast(t.id)">&times;</button>
+    </div>
+  </div>
+
+  <!-- 
+       7. FULL-SCREEN GLASSMORPHISM CIVIX SPLASH OVERLAY (1.5 Sec Auto Dismiss, No Close Button)
+        -->
+  <div class="civix-glass-overlay" *ngIf="showCivixSplash">
+    <div class="civix-glass-card">
+      <div class="splash-logo-glow">
+        <img src="/LOGO.png" alt="CIVIX Logo" class="splash-logo-img" />
+      </div>
+      <h1 class="splash-brand-title">CIVIX</h1>
+      <p class="splash-brand-slogan">Your Voice. Your City.</p>
+      <div class="splash-timer-bar">
+        <div class="splash-timer-progress"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 
+       8. FULL-SCREEN LIGHTBOX ZOOM MODAL FOR COMPLAINT PHOTOS
+        -->
+  <div class="photo-zoom-modal-backdrop" *ngIf="zoomedPhotoUrl" (click)="closePhotoZoom()">
+    <div class="photo-zoom-modal-card" (click)="$event.stopPropagation()">
+      <button class="btn-close-zoom" (click)="closePhotoZoom()" title="Close (Esc)">&times;</button>
+      <div class="photo-zoom-img-wrapper">
+        <img [src]="zoomedPhotoUrl" alt="Zoomed Complaint Evidence" class="zoomed-photo-img" />
+      </div>
+      <div class="photo-zoom-caption">
+        <span>Complaint Evidence Photo (Click anywhere or press Esc to close)</span>
+      </div>
     </div>
   </div>
 

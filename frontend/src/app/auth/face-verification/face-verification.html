@@ -1,0 +1,112 @@
+<div class="fv-root">
+  <nav class="fv-navbar">
+    <div class="nb-wordmark">
+      <span class="nb-name">CIVIX</span>
+      <span class="nb-slogan">Photo Capture</span>
+    </div>
+  </nav>
+
+  <div class="fv-body">
+    <div class="fv-card">
+
+      <!-- Step: Email (no pending email in localStorage) -->
+      <ng-container *ngIf="step === 'email'">
+        <div class="fv-header">
+          <div class="fv-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <h2>Confirm Your Email</h2>
+          <p>Enter the email address you used to register to continue with photo capture.</p>
+        </div>
+        <div class="fv-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <input
+            type="email"
+            [(ngModel)]="email"
+            placeholder="your-email@domain.com"
+            style="width:100%;padding:12px 14px;font-size:14px;border:1.5px solid #e2e8f0;border-radius:10px;outline:none;color:#0f172a;background:#f8fafc;"
+          />
+          <button class="fv-btn" (click)="submitEmail()">
+            Continue to Camera
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+        <div class="fv-back-link"><a routerLink="/login">← Back to Login</a></div>
+      </ng-container>
+
+      <!-- Step: Camera -->
+      <ng-container *ngIf="step === 'camera'">
+        <div class="fv-header">
+          <div class="fv-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+          <h2>Capture Your Photo</h2>
+          <p>Look directly at the camera and click <strong>Capture Photo</strong>. This photo will become your permanent CIVIX profile picture.</p>
+        </div>
+        <div class="fv-camera-wrap">
+          <video #videoEl autoplay playsinline muted class="fv-video"></video>
+          <div class="fv-overlay-ring"></div>
+        </div>
+        <div class="fv-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+        <button class="fv-btn" (click)="capturePhoto()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
+          Capture Photo
+        </button>
+        <canvas #canvasEl style="display:none"></canvas>
+      </ng-container>
+
+      <!-- Step: Preview -->
+      <ng-container *ngIf="step === 'preview'">
+        <div class="fv-header">
+          <div class="fv-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <h2>Confirm Your Photo</h2>
+          <p>This will be your permanent CIVIX profile picture. It cannot be changed through normal settings.</p>
+        </div>
+        <div class="fv-preview-wrap">
+          <img [src]="capturedImage" alt="Captured photo" class="fv-preview-img"/>
+        </div>
+        <div class="fv-btn-row">
+          <button class="fv-btn-secondary" (click)="retake()">Retake</button>
+          <button class="fv-btn" (click)="confirmPhoto()">Confirm &amp; Upload</button>
+        </div>
+      </ng-container>
+
+      <!-- Step: Uploading -->
+      <ng-container *ngIf="step === 'uploading'">
+        <div class="fv-header">
+          <div class="fv-spinner-large"></div>
+          <h2>Uploading Photo...</h2>
+          <p>Please wait while we complete your registration.</p>
+        </div>
+      </ng-container>
+
+      <!-- Step: Done -->
+      <ng-container *ngIf="step === 'done'">
+        <div class="fv-header">
+          <div class="fv-icon success">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <h2>Registration Complete!</h2>
+          <p>{{ successMessage }}</p>
+          <p class="fv-redirect-hint">Redirecting to login...</p>
+        </div>
+      </ng-container>
+
+      <!-- Step: Error -->
+      <ng-container *ngIf="step === 'error'">
+        <div class="fv-header">
+          <div class="fv-icon error">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <h2>Verification Failed</h2>
+          <p>{{ errorMessage }}</p>
+        </div>
+        <button class="fv-btn" (click)="retake()">Try Again</button>
+        <div class="fv-back-link"><a routerLink="/login">← Back to Login</a></div>
+      </ng-container>
+
+    </div>
+  </div>
+</div>

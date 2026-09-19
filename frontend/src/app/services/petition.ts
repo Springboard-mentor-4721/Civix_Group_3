@@ -11,7 +11,7 @@ export type PetitionCategory =
   | 'Healthcare'
   | 'Housing';
 
-export type PetitionStatus = 'active' | 'under_review' | 'closed';
+export type PetitionStatus = 'active' | 'under_review' | 'in_progress' | 'resolved' | 'closed';
 
 export interface PetitionCreate {
   title: string;
@@ -19,6 +19,7 @@ export interface PetitionCreate {
   category: PetitionCategory;
   location: string;
   signature_goal: number;
+  photos?: string[];
 }
 
 export interface PetitionUpdate {
@@ -27,6 +28,11 @@ export interface PetitionUpdate {
   category?: PetitionCategory;
   location?: string;
   signature_goal?: number;
+}
+
+export interface PetitionPhotoItem {
+  id: number;
+  url: string;
 }
 
 export interface PetitionResponse {
@@ -39,8 +45,11 @@ export interface PetitionResponse {
   signature_goal: number;
   signature_count: number;
   creator_id: number;
+  creator_name?: string;
+  creator_profile_picture_url?: string | null;
   created_at: string;
   updated_at: string;
+  photos?: PetitionPhotoItem[];
 }
 
 export interface PetitionDetailResponse extends PetitionResponse {
@@ -77,6 +86,27 @@ export interface SignatureResponse {
 
 export interface PetitionDeleteResponse {
   message: string;
+}
+
+export interface DashboardStats {
+  total_petitions: number;
+  active: number;
+  under_review: number;
+  in_progress: number;
+  resolved: number;
+  closed: number;
+  total_signatures: number;
+  department: string;
+  jurisdiction: string;
+}
+
+export interface OfficialResponse {
+  id: number;
+  petition_id: number;
+  official_id: number;
+  response_text: string;
+  action_taken: string | null;
+  created_at: string;
 }
 
 import { environment } from '../../environments/environment';
@@ -164,5 +194,36 @@ export class PetitionService {
    */
   signPetition(petitionId: number): Observable<SignatureResponse> {
     return this.http.post<SignatureResponse>(`${this.baseUrl}/${petitionId}/sign`, {});
+  }
+
+  /**
+   * GET /api/petitions/official/dashboard - Official dashboard stats
+   */
+  getOfficialDashboard(): Observable<DashboardStats> {
+    return this.http.get<DashboardStats>(`${this.baseUrl}/official/dashboard`);
+  }
+
+  /**
+   * GET /api/petitions/official/list - Petitions for official's department
+   */
+  getOfficialPetitions(params?: {
+    petition_status?: PetitionStatus;
+    page?: number;
+    per_page?: number;
+  }): Observable<PetitionListResponse> {
+    let httpParams = new HttpParams();
+    if (params) {
+      if (params.petition_status) httpParams = httpParams.set('petition_status', params.petition_status);
+      if (params.page) httpParams = httpParams.set('page', params.page.toString());
+      if (params.per_page) httpParams = httpParams.set('per_page', params.per_page.toString());
+    }
+    return this.http.get<PetitionListResponse>(`${this.baseUrl}/official/list`, { params: httpParams });
+  }
+
+  /**
+   * POST /api/petitions/{petition_id}/respond - Add official response
+   */
+  addOfficialResponse(petitionId: number, response_text: string, action_taken?: string): Observable<OfficialResponse> {
+    return this.http.post<OfficialResponse>(`${this.baseUrl}/${petitionId}/respond`, { response_text, action_taken });
   }
 }

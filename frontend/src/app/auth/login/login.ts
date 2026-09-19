@@ -110,41 +110,54 @@ export class Login implements OnDestroy {
 
     this.authService.login({ email: this.email.trim(), password: this.password }).subscribe({
       next: (tokenRes) => {
-        // Fetch fresh profile from /api/auth/me
         this.authService.getMe().subscribe({
-          next: () => {
+          next: (user) => {
             this.loading = false;
-            this.router.navigate(['/dashboard']);
+            if (tokenRes.must_change_password) {
+              // Backend has sent a password-change email; clear session and inform user
+              this.authService.clearSession();
+              this.infoMessage = 'A password-change link has been sent to your email. Please check your inbox to set your permanent password.';
+            } else if (user.role === 'official') {
+              this.router.navigate(['/official/dashboard']);
+            } else {
+              this.router.navigate(['/citizen/dashboard']);
+            }
           },
           error: () => {
             this.loading = false;
-            this.router.navigate(['/dashboard']);
+            if (tokenRes.must_change_password) {
+              this.authService.clearSession();
+              this.infoMessage = 'A password-change link has been sent to your email. Please check your inbox.';
+            } else {
+              this.router.navigate(['/citizen/dashboard']);
+            }
           }
         });
       },
       error: (err) => {
         this.loading = false;
-        const detail = err.error?.detail || err.error?.message || err.error || 'Invalid email or password';
-        this.errorMessage = typeof detail === 'string' ? detail : 'Invalid email or password';
+        const detail = err.error?.detail;
+        const code = typeof detail === 'object' ? detail?.code : null;
+        const msg  = typeof detail === 'object' ? detail?.message : (typeof detail === 'string' ? detail : 'Invalid email or password');
 
-        // Account lockout — HTTP 429
+        this.errorMessage = msg || 'Invalid email or password';
+
         if (err.status === 429) {
-          // Extract minutes from message e.g. "Try again in 14 minute(s)."
           const match = this.errorMessage.match(/(\d+)\s*minute/i);
           const mins = match ? parseInt(match[1], 10) : 15;
           this.startLockoutCountdown(mins);
           return;
         }
 
-        // Official verification pending — HTTP 403
-        if (err.status === 403 && this.errorMessage.toLowerCase().includes('verification')) {
+        if (code === 'email_not_verified') {
           this.showResendButton = true;
           return;
         }
 
-        // Session evicted from another device (backend blacklisted old token) — HTTP 401
-        if (err.status === 401 && this.errorMessage.toLowerCase().includes('another device')) {
-          this.errorMessage = 'You have been signed out from another device due to the session limit. Please login again.';
+        if (code === 'face_not_verified') {
+          localStorage.setItem('civix_pending_email', this.email.trim().toLowerCase());
+          this.router.navigate(['/face-verification']);
+          return;
         }
       }
     });

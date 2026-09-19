@@ -4,11 +4,13 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import OperationalError
 
 from app.database import engine, Base
 from app.routes.auth import router as auth_router
 from app.routes.petition import router as petition_router
+from app.models import user, petition, signature, official_response  # noqa: F401
 
 load_dotenv()
 
@@ -55,6 +57,11 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(petition_router)
+
+# Serve static assets (email images)
+_static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.isdir(_static_dir):
+    app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 
 @app.get("/", tags=["Health"])

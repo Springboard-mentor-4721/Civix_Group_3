@@ -21,7 +21,8 @@ export class VerifyEmail implements OnInit {
 
   constructor(
     private authService: Auth,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -36,11 +37,13 @@ export class VerifyEmail implements OnInit {
       this.authService.verifyEmail(token).subscribe({
         next: (res) => {
           this.status = 'success';
-          this.successMessage = res.message || 'Email verified successfully!';
+          this.successMessage = res.message || 'Email verified! Redirecting to face verification...';
+          setTimeout(() => this.router.navigate(['/face-verification']), 2500);
         },
         error: (err) => {
           this.status = 'error';
-          this.errorMessage = err.error?.detail || err.error?.message || 'This verification link is invalid or has expired.';
+          const detail = err.error?.detail;
+          this.errorMessage = (typeof detail === 'object' ? detail?.message : detail) || 'This verification link is invalid or has expired.';
         }
       });
     });

@@ -1,0 +1,205 @@
+<div class="create-page">
+
+  <div class="form-wrapper">
+
+    <!-- HEADER -->
+
+    <div class="form-header">
+
+      <button
+        class="back-btn"
+        (click)="cancel()">
+
+        ← Back to Polls
+
+      </button>
+
+      <h1>Create a New Poll</h1>
+
+      <p>
+        Ask your community a question and collect their opinions.
+      </p>
+
+    </div>
+
+
+    <!-- ERROR -->
+
+    <div
+      class="error"
+      *ngIf="errorMessage">
+
+      {{ errorMessage }}
+
+    </div>
+
+
+    <!-- FORM -->
+
+    <div class="form-card">
+
+      <!-- TITLE -->
+
+      <div class="form-group">
+
+        <label>
+          Poll Question <span>*</span>
+        </label>
+
+        <input
+          type="text"
+          [(ngModel)]="title"
+          maxlength="200"
+          placeholder="Example: Should our area get a new public park?">
+
+        <small>
+          Keep your question clear and specific.
+        </small>
+
+      </div>
+
+
+      <!-- DESCRIPTION -->
+
+      <div class="form-group">
+
+        <label>
+          Description <span>*</span>
+        </label>
+
+        <textarea
+          [(ngModel)]="description"
+          rows="4"
+          placeholder="Provide context so citizens can make an informed choice.">
+        </textarea>
+
+      </div>
+
+
+      <!-- OPTIONS -->
+
+      <div class="form-group">
+
+        <div class="label-row">
+
+          <label>
+            Answer Options <span>*</span>
+          </label>
+
+          <span>
+            {{ options.length }}/10
+          </span>
+
+        </div>
+
+
+        <div
+          class="option-row"
+          *ngFor="let option of options; let i = index">
+
+          <div class="option-number">
+            {{ i + 1 }}
+          </div>
+
+          <input
+            type="text"
+            [(ngModel)]="options[i]"
+            placeholder="Enter answer option">
+
+
+          <button
+            *ngIf="options.length > 2"
+            class="remove-btn"
+            (click)="removeOption(i)">
+
+            ×
+
+          </button>
+
+        </div>
+
+
+        <button
+          *ngIf="options.length < 10"
+          class="add-option"
+          (click)="addOption()">
+
+          ＋ Add Option
+
+        </button>
+
+      </div>
+
+
+      <!-- LOCATION -->
+
+      <div class="form-group">
+
+        <label>
+          Target Location <span>*</span>
+        </label>
+
+        <div class="input-icon">
+
+          <span>⌖</span>
+
+          <input
+            type="text"
+            [(ngModel)]="targetLocation"
+            placeholder="Example: Chennai, Tamil Nadu">
+
+        </div>
+
+      </div>
+
+
+      <!-- DATE -->
+
+      <div class="form-group">
+
+        <label>
+          Poll Closing Date <span>*</span>
+        </label>
+
+        <input
+          type="date"
+          [(ngModel)]="closesOn">
+
+        <small>
+          Polls can be scheduled for a maximum of 30 days.
+        </small>
+
+      </div>
+
+
+      <!-- ACTIONS -->
+
+      <div class="form-actions">
+
+        <button
+          class="cancel-btn"
+          (click)="cancel()">
+
+          Cancel
+
+        </button>
+
+        <button
+          class="submit-btn"
+          [disabled]="submitting"
+          (click)="createPoll()">
+
+          {{ submitting
+              ? 'Creating Poll...'
+              : 'Create Poll'
+          }}
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

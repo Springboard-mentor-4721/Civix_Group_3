@@ -1,0 +1,9 @@
+backend/venv/
+frontend/node_modules/
+frontend/.angular/
+frontend/dist/
+__pycache__/
+*.pyc
+backend/uvicorn.log
+backend/.env
+backup_temp/

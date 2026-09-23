@@ -1,0 +1,125 @@
+<div class="polls-container">
+
+  <!-- Filters Toolbar -->
+  <div class="polls-filters-bar">
+    <div class="filter-group search-group">
+      <span class="filter-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </span>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (input)="onFilterChange()"
+        placeholder="Search polls by title or question..."
+        class="filter-input"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Category</label>
+      <select [(ngModel)]="selectedCategory" (change)="onFilterChange()" class="filter-select">
+        <option value="all">All Categories</option>
+        <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Status</label>
+      <select [(ngModel)]="selectedStatus" (change)="onFilterChange()" class="filter-select">
+        <option value="all">All Statuses</option>
+        <option value="active">Active</option>
+        <option value="scheduled">Scheduled</option>
+        <option value="closed">Closed</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Location</label>
+      <input
+        type="text"
+        [(ngModel)]="locationFilter"
+        (input)="onFilterChange()"
+        placeholder="e.g. Gurandi, Odisha"
+        class="filter-input"
+      />
+    </div>
+
+    <button class="btn-reset" (click)="resetFilters()" title="Reset Filters">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      Reset
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="polls-state" *ngIf="loading">
+    <div class="civix-spin"></div>
+    <p>Loading civic polls...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="polls-error" *ngIf="!loading && errorMessage">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- Empty State -->
+  <div class="polls-empty" *ngIf="!loading && !errorMessage && polls.length === 0">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+    <h3>No Polls Found</h3>
+    <p>There are no active or scheduled polls matching your search criteria.</p>
+  </div>
+
+  <!-- Poll Cards Grid -->
+  <div class="polls-grid" *ngIf="!loading && !errorMessage && polls.length > 0">
+    <div class="poll-card" *ngFor="let poll of polls" (click)="viewDetail(poll)">
+
+      <div class="card-top">
+        <span class="category-badge">{{ poll.category }}</span>
+        <span class="petition-tag" *ngIf="poll.petition_id" title="Linked to petition">
+          📌 Petition #{{ poll.petition_id }}
+        </span>
+        <span class="status-pill" [ngClass]="getStatusClass(poll.status)">
+          <span class="status-dot"></span>
+          {{ getStatusLabel(poll.status) }}
+        </span>
+      </div>
+
+      <h3 class="card-title">{{ poll.title }}</h3>
+      <p class="card-question">{{ poll.question }}</p>
+
+      <div class="card-meta">
+        <div class="meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>{{ poll.location }}</span>
+        </div>
+        <div class="meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <span><strong>{{ poll.total_votes }}</strong> {{ poll.total_votes === 1 ? 'vote' : 'votes' }}</span>
+        </div>
+      </div>
+
+      <div class="card-dates">
+        <div class="date-col">
+          <span class="d-label">Starts</span>
+          <span class="d-val">{{ formatDate(poll.start_at) }}</span>
+        </div>
+        <div class="date-col">
+          <span class="d-label">Ends</span>
+          <span class="d-val">{{ formatDate(poll.end_at) }}</span>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span class="voted-tag" *ngIf="poll.has_voted">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Voted
+        </span>
+        <button class="btn-card-action" [class.primary]="poll.status === 'active' && !poll.has_voted">
+          {{ poll.has_voted ? 'View Live Graph' : (poll.status === 'active' ? 'Cast Vote' : 'View Details') }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>

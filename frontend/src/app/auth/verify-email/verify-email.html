@@ -1,0 +1,81 @@
+<div class="auth-root" style="display:flex;flex-direction:column;min-height:100vh;background:#f0f4f8;font-family:Arial,sans-serif;">
+
+  <nav style="height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;background:#fff;border-bottom:1px solid #e8edf5;box-shadow:0 1px 8px rgba(0,0,0,.05);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img src="/LOGO.png" alt="CIVIX Logo" style="height:32px;width:auto;" />
+      <div style="display:flex;flex-direction:column;line-height:1;">
+        <span style="font-size:22px;font-weight:900;color:#0f172a;letter-spacing:-0.04em;">CIVIX</span>
+        <span style="font-size:10px;font-weight:600;color:#0d9488;letter-spacing:0.5px;">Email Verification</span>
+      </div>
+    </div>
+  </nav>
+
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:32px 16px;">
+    <div style="width:100%;max-width:460px;background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:40px 36px;box-shadow:0 4px 24px rgba(0,0,0,.07);text-align:center;">
+
+      <!-- Loading -->
+      <ng-container *ngIf="status === 'loading'">
+        <div style="display:flex;justify-content:center;margin-bottom:20px;">
+          <div style="width:48px;height:48px;border:3px solid #e2e8f0;border-top-color:#0d9488;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+        </div>
+        <h3 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 8px;">Verifying Your Email</h3>
+        <p style="font-size:13.5px;color:#64748b;margin:0;">Please wait while we validate your verification link...</p>
+      </ng-container>
+
+      <!-- Success -->
+      <ng-container *ngIf="status === 'success'">
+        <div style="width:64px;height:64px;border-radius:50%;background:#f0fdf4;border:2px solid #86efac;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:#16a34a;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 8px;">Email Verified!</h3>
+        <p style="font-size:13.5px;color:#64748b;margin:0 0 16px;">{{ successMessage }}</p>
+        <p style="font-size:12px;color:#94a3b8;margin:0;">Redirecting to photo capture...</p>
+      </ng-container>
+
+      <!-- Error -->
+      <ng-container *ngIf="status === 'error'">
+        <div style="width:64px;height:64px;border-radius:50%;background:#fef2f2;border:2px solid #fca5a5;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:#dc2626;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 8px;">Verification Failed</h3>
+        <p style="font-size:13.5px;color:#64748b;margin:0 0 24px;">{{ errorMessage }}</p>
+
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:left;margin-bottom:20px;">
+          <h4 style="font-size:13px;font-weight:700;color:#0f172a;margin:0 0 6px;">Request a new verification link</h4>
+          <p style="font-size:12px;color:#64748b;margin:0 0 12px;">Enter your registered email to receive a fresh link.</p>
+          <div style="display:flex;gap:8px;">
+            <input
+              type="email"
+              [(ngModel)]="resendEmail"
+              placeholder="your-email@domain.com"
+              style="flex:1;padding:9px 12px;font-size:13px;border:1.5px solid #e2e8f0;border-radius:8px;outline:none;color:#0f172a;background:#fff;"
+            />
+            <button
+              type="button"
+              (click)="onResend()"
+              [disabled]="resending || !resendEmail"
+              style="padding:9px 16px;background:linear-gradient(135deg,#0d9488,#0f766e);color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;"
+            >{{ resending ? 'Sending...' : 'Send Link' }}</button>
+          </div>
+          <div *ngIf="resendFeedback" style="margin-top:10px;font-size:12px;color:#0f766e;font-weight:600;">{{ resendFeedback }}</div>
+        </div>
+
+        <a routerLink="/login" style="display:inline-block;padding:11px 28px;background:linear-gradient(135deg,#0d9488,#0f766e);color:#fff;border-radius:10px;font-size:13.5px;font-weight:700;text-decoration:none;">Return to Login</a>
+      </ng-container>
+
+    </div>
+  </div>
+
+  <footer style="height:42px;display:flex;align-items:center;justify-content:center;background:#fff;border-top:1px solid #e8edf5;">
+    <span style="font-size:11px;color:#cbd5e1;">&copy; 2026 Civix. All rights reserved.</span>
+  </footer>
+
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>

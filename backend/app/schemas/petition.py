@@ -43,10 +43,13 @@ class PetitionUpdate(BaseModel):
 
 class PetitionStatusUpdate(BaseModel):
     status: PetitionStatus
+    note: Optional[str] = None
 
+
+from typing import Optional, Any, Union
 
 class PetitionPhotoOut(BaseModel):
-    id: int
+    id: Optional[int] = 0
     url: str
     model_config = ConfigDict(from_attributes=True)
 
@@ -81,7 +84,7 @@ class PetitionResponse(BaseModel):
     creator_profile_picture_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    photos: list[PetitionPhotoOut] = []
+    photos: list[Any] = []
 
     model_config = ConfigDict(from_attributes=True)
 

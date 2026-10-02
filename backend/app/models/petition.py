@@ -34,3 +34,5 @@ class PetitionPhoto(Base):
     created_at  = Column(DateTime, nullable=False, server_default=func.now())
 
     petition = relationship("Petition", back_populates="photos")
+
+from app.models.official_response import OfficialResponse as PetitionOfficialResponse

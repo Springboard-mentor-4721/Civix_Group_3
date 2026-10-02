@@ -1,11 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Auth, UserResponse } from '../auth/auth';
 import { PetitionService, PetitionResponse, PetitionStatus, DashboardStats, OfficialResponse } from '../services/petition';
-import { OfficialPolls } from '../polls/official-polls';
 
 export interface Toast {
   id: number;
@@ -13,7 +12,7 @@ export interface Toast {
   type: 'success' | 'error' | 'info';
 }
 
-export type NavSection = 'overview' | 'petitions' | 'polls' | 'settings';
+export type NavSection = 'overview' | 'petitions' | 'polls' | 'reports' | 'settings';
 export type SettingsTab = 'profile' | 'notifications' | 'privacy' | 'appearance' | 'department';
 
 export interface AppSettings {
@@ -36,7 +35,7 @@ export interface AppSettings {
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
-  theme: 'light',
+  theme: 'dark',
   language: 'English',
   fontSize: 14,
   compactMode: false,
@@ -68,7 +67,7 @@ export interface OfficialTourStep {
 @Component({
   selector: 'app-official-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, OfficialPolls],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './official-dashboard.html',
   styleUrl: './official-dashboard.css'
 })
@@ -85,7 +84,10 @@ export class OfficialDashboard implements OnInit {
   petitions: PetitionResponse[] = [];
   loadingPetitions: boolean = false;
   selectedStatus: string = 'all';
+  selectedCategory: string = 'all';
   searchQuery: string = '';
+  viewMode: 'grid' | 'table' = 'grid';
+
   updatingStatusId: number | null = null;
   statusUpdates: Record<number, PetitionStatus> = {};
 
@@ -124,7 +126,7 @@ export class OfficialDashboard implements OnInit {
     {
       step: 1,
       title: 'Municipal Dashboard Overview',
-      badge: 'Step 1 of 5 • Overview & Key Metrics',
+      badge: 'Step 1 of 4 ? Overview & Key Metrics',
       purpose: 'Track overall petition numbers, resolution counts, active cases, and constituency signature totals.',
       whyUse: 'Provides real-time visibility into department workload, allowing leadership to prioritize urgent grievances.',
       description: 'View essential performance metrics across your jurisdiction, including Active, Under Review, In Progress, and Resolved petitions.',
@@ -134,7 +136,7 @@ export class OfficialDashboard implements OnInit {
     {
       step: 2,
       title: 'Department Petition Review & Triage',
-      badge: 'Step 2 of 5 • Petition Management',
+      badge: 'Step 2 of 4 ? Petition Management',
       purpose: 'Filter petitions by status, inspect citizen evidence photos, and update petition status.',
       whyUse: 'Allows municipal officers to transition petitions from "Active" to "In Progress" or "Resolved" as field work is completed.',
       description: 'Search petitions by keyword, filter by status, click to view evidence photos with lightbox zoom, and update status dropdowns instantly.',
@@ -144,7 +146,7 @@ export class OfficialDashboard implements OnInit {
     {
       step: 3,
       title: 'Publish Official Response & Action Plans',
-      badge: 'Step 3 of 4 • Transparency & Citizen Updates',
+      badge: 'Step 3 of 4 ? Transparency & Citizen Updates',
       purpose: 'Publish binding municipal status updates and concrete action plans directly on petitions.',
       whyUse: 'Notifies signed citizens instantly via email/push alerts, building public trust and demonstrating council responsiveness.',
       description: 'Inside any petition detail view, enter official response comments and document field actions taken by your engineering or sanitation teams.',
@@ -154,7 +156,7 @@ export class OfficialDashboard implements OnInit {
     {
       step: 4,
       title: 'Settings, Danger Zone & Security',
-      badge: 'Step 4 of 4 • Account Administration',
+      badge: 'Step 4 of 4 ? Account Administration',
       purpose: 'Auto-save preferences, trigger email password reset links, launch platform tour, or manage security.',
       whyUse: 'Provides self-serve account recovery options and system configurations for municipal personnel.',
       description: 'Features 5 sub-tabs: Profile & Identity, Notifications, Privacy & Security (with Danger Zone), Appearance, and Department Routing.',
@@ -170,6 +172,18 @@ export class OfficialDashboard implements OnInit {
     { label: 'In Progress',  value: 'in_progress' },
     { label: 'Resolved',     value: 'resolved' },
     { label: 'Closed',       value: 'closed' }
+  ];
+
+  categories: string[] = [
+    'All Categories',
+    'Infrastructure',
+    'Environment',
+    'Public Safety',
+    'Transportation',
+    'Education',
+    'Healthcare',
+    'Housing',
+    'Other'
   ];
 
   constructor(
@@ -199,6 +213,99 @@ export class OfficialDashboard implements OnInit {
     this.loadStats();
     this.loadPetitions();
     this.loadSettings();
+    this.generateCalendar();
+  }
+
+  // Calendar State
+  currentCalendarDate: Date = new Date();
+  calendarDays: Array<{
+    date: Date;
+    dayNumber: number;
+    isCurrentMonth: boolean;
+    isToday: boolean;
+    hasEvent: boolean;
+    eventCount: number;
+  }> = [];
+
+  generateCalendar(): void {
+    const year = this.currentCalendarDate.getFullYear();
+    const month = this.currentCalendarDate.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const startDayOfWeek = firstDayOfMonth.getDay();
+    const daysInMonth = lastDayOfMonth.getDate();
+
+    const today = new Date();
+    const days: typeof this.calendarDays = [];
+
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+      const d = new Date(year, month - 1, prevMonthLastDay - i);
+      days.push({
+        date: d,
+        dayNumber: d.getDate(),
+        isCurrentMonth: false,
+        isToday: false,
+        hasEvent: false,
+        eventCount: 0
+      });
+    }
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = new Date(year, month, i);
+      const isToday = d.toDateString() === today.toDateString();
+      const dateStr = d.toISOString().split('T')[0];
+      const eventCount = this.petitions.filter(p => {
+        if (!p.created_at) return false;
+        return p.created_at.startsWith(dateStr);
+      }).length;
+
+      days.push({
+        date: d,
+        dayNumber: i,
+        isCurrentMonth: true,
+        isToday: isToday,
+        hasEvent: eventCount > 0,
+        eventCount: eventCount
+      });
+    }
+
+    const remaining = (days.length <= 35 ? 35 : 42) - days.length;
+    for (let i = 1; i <= remaining; i++) {
+      const d = new Date(year, month + 1, i);
+      days.push({
+        date: d,
+        dayNumber: i,
+        isCurrentMonth: false,
+        isToday: false,
+        hasEvent: false,
+        eventCount: 0
+      });
+    }
+
+    this.calendarDays = days;
+  }
+
+  prevCalendarMonth(): void {
+    this.currentCalendarDate = new Date(
+      this.currentCalendarDate.getFullYear(),
+      this.currentCalendarDate.getMonth() - 1,
+      1
+    );
+    this.generateCalendar();
+  }
+
+  nextCalendarMonth(): void {
+    this.currentCalendarDate = new Date(
+      this.currentCalendarDate.getFullYear(),
+      this.currentCalendarDate.getMonth() + 1,
+      1
+    );
+    this.generateCalendar();
+  }
+
+  get currentMonthYearLabel(): string {
+    return this.currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }
 
   getSafeSvg(svgString: string): SafeHtml {
@@ -208,8 +315,9 @@ export class OfficialDashboard implements OnInit {
   getPageTitle(): string {
     switch (this.activeNav) {
       case 'overview': return 'Official Dashboard Overview';
-      case 'petitions': return `Petition Review — ${this.currentUser?.department || 'Department'}`;
+      case 'petitions': return `Petition Review ? ${this.currentUser?.department || 'Department'}`;
       case 'polls': return 'Poll Management';
+      case 'reports': return 'Reports & Civic Analytics';
       case 'settings': return 'Department Settings & Preferences';
       default: return 'Official Portal';
     }
@@ -225,6 +333,10 @@ export class OfficialDashboard implements OnInit {
     this.selectedPetition = null;
     if (nav === 'polls') {
       this.router.navigate(['/official/polls']);
+      return;
+    }
+    if (nav === 'reports') {
+      this.router.navigate(['/official/reports']);
       return;
     }
     if (nav === 'overview')  this.loadStats();
@@ -258,6 +370,7 @@ export class OfficialDashboard implements OnInit {
         this.petitions = res.petitions || [];
         this.petitions.forEach(p => { this.statusUpdates[p.id] = p.status; });
         this.loadingPetitions = false;
+        this.generateCalendar();
         this.cdr.detectChanges();
       },
       error: () => {
@@ -268,13 +381,48 @@ export class OfficialDashboard implements OnInit {
   }
 
   get filteredPetitions(): PetitionResponse[] {
-    if (!this.searchQuery.trim()) return this.petitions;
-    const q = this.searchQuery.toLowerCase();
-    return this.petitions.filter(p =>
-      p.title.toLowerCase().includes(q) ||
-      p.location.toLowerCase().includes(q) ||
-      p.category.toLowerCase().includes(q)
-    );
+    let list = this.petitions;
+    if (this.selectedCategory !== 'all' && this.selectedCategory !== 'All Categories') {
+      list = list.filter(p => p.category?.toLowerCase() === this.selectedCategory.toLowerCase());
+    }
+    if (this.searchQuery.trim()) {
+      const q = this.searchQuery.toLowerCase();
+      list = list.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        p.location.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }
+
+  get urgentPetitions(): PetitionResponse[] {
+    return this.petitions.filter(p => {
+      const pct = this.getProgressPct(p.signature_count, p.signature_goal);
+      return (pct >= 80 || p.status === 'under_review') && p.status !== 'resolved' && p.status !== 'closed';
+    }).slice(0, 4);
+  }
+
+  get recentPetitions(): PetitionResponse[] {
+    return [...this.petitions].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5);
+  }
+
+  get resolutionPercentage(): number {
+    if (!this.stats || !this.stats.total_petitions) return 0;
+    return Math.round((this.stats.resolved / this.stats.total_petitions) * 100);
+  }
+
+  get resolutionColor(): string {
+    const pct = this.resolutionPercentage;
+    if (pct >= 65) return '#0d9488';
+    if (pct >= 35) return '#d97706';
+    return '#ef4444';
+  }
+
+  get resolutionGradient(): string {
+    const pct = this.resolutionPercentage;
+    const color = this.resolutionColor;
+    return `conic-gradient(${color} ${pct}%, #e2e8f0 ${pct}% 100%)`;
   }
 
   openPetitionDetail(p: PetitionResponse) {
@@ -409,7 +557,7 @@ export class OfficialDashboard implements OnInit {
     });
   }
 
-  // ── Auto-Save Settings ──────────────────────────────────────────────────
+  // ?? Auto-Save Settings ??????????????????????????????????????????????????
   loadSettings() {
     const raw = localStorage.getItem('civix_official_settings');
     if (raw) {
@@ -449,13 +597,13 @@ export class OfficialDashboard implements OnInit {
     this.authService.forgotPassword(email).subscribe({
       next: () => {
         this.pwdResetSent = true;
-        this.showToast('🔐 Password reset link sent to registered official email.', 'success');
+        this.showToast('?? Password reset link sent to registered official email.', 'success');
         setTimeout(() => { this.pwdResetSent = false; this.cdr.detectChanges(); }, 5000);
         this.cdr.detectChanges();
       },
       error: () => {
         this.pwdResetSent = true;
-        this.showToast('🔐 Password reset link sent to registered official email.', 'success');
+        this.showToast('?? Password reset link sent to registered official email.', 'success');
         setTimeout(() => { this.pwdResetSent = false; this.cdr.detectChanges(); }, 5000);
         this.cdr.detectChanges();
       }
@@ -473,7 +621,7 @@ export class OfficialDashboard implements OnInit {
       next: () => {
         this.changingPassword = false;
         this.pwdModel = { current: '', newPwd: '', confirmPwd: '' };
-        this.showToast('🔐 Password reset instructions sent to your official email!', 'success');
+        this.showToast('?? Password reset instructions sent to your official email!', 'success');
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -484,7 +632,7 @@ export class OfficialDashboard implements OnInit {
     });
   }
 
-  // ── Interactive App Tour Methods ─────────────────────────────────────────
+  // ?? Interactive App Tour Methods ?????????????????????????????????????????
   launchAppTour() {
     this.currentTourStepIndex = 0;
     this.showAppTour = true;
@@ -523,7 +671,7 @@ export class OfficialDashboard implements OnInit {
 
   finishAppTour() {
     this.showAppTour = false;
-    this.showToast('🎉 You have completed the Official Portal Tour!', 'success');
+    this.showToast('?? You have completed the Official Portal Tour!', 'success');
   }
 
   requestAccountErasure() {

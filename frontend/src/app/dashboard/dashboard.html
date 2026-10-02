@@ -70,22 +70,20 @@
         <span class="sb-link-name" *ngIf="!sidebarCollapsed">Polls & Ballots</span>
       </a>
 
-      <a class="sb-link" [class.active]="activeNav === 'officials'" (click)="setNav('officials')" title="Officials Directory (Coming Soon)">
+      <a class="sb-link" [class.active]="activeNav === 'officials'" (click)="setNav('officials')" title="Officials Directory">
         <div class="sb-icon-wrap">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 1 0 7.75"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
         <span class="sb-link-name" *ngIf="!sidebarCollapsed">Officials</span>
-        <span class="sb-badge coming" *ngIf="!sidebarCollapsed">Soon</span>
       </a>
 
       <div class="sb-section-label" *ngIf="!sidebarCollapsed">Insights</div>
 
-      <a class="sb-link" [class.active]="activeNav === 'analytics'" (click)="setNav('analytics')" title="Analytics (Coming Soon)">
+      <a class="sb-link" [class.active]="activeNav === 'analytics'" (click)="setNav('analytics')" title="Analytics">
         <div class="sb-icon-wrap">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         </div>
         <span class="sb-link-name" *ngIf="!sidebarCollapsed">Analytics</span>
-        <span class="sb-badge coming" *ngIf="!sidebarCollapsed">Soon</span>
       </a>
 
       <div class="sb-section-label" *ngIf="!sidebarCollapsed">Account</div>
@@ -670,20 +668,119 @@
         <app-polls-list></app-polls-list>
       </div>
 
-      <!-- COMING SOON VIEW FOR OTHER TABS  -->
-      <div class="coming-soon-state" *ngIf="activeNav !== 'petitions' && activeNav !== 'settings' && activeNav !== 'polls'">
-        <div class="cs-icon">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/>
-            <path d="M4 10v11"/><path d="M20 10v11"/>
-            <path d="M8 14v4"/><path d="M12 14v4"/><path d="M16 14v4"/>
-          </svg>
+      <!-- OFFICIALS DIRECTORY TAB -->
+      <div class="officials-view" *ngIf="activeNav === 'officials'">
+        <div class="ov-header">
+          <div>
+            <h2 class="ov-title">Officials Directory</h2>
+            <p class="ov-sub">Verified municipal officers and department heads in your locality.</p>
+          </div>
+          <div class="ov-search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" [(ngModel)]="officialsSearch" placeholder="Search by name, department, location..." />
+          </div>
         </div>
-        <h2>{{ getPageTitle() }} coming soon</h2>
-        <p>This module is currently being finalized. In the meantime, explore and create local petitions!</p>
-        <button class="ov-btn-primary" style="margin-top:16px" (click)="setNav('petitions')">
-          Explore Petitions
-        </button>
+
+        <div class="ov-loading" *ngIf="officialsLoading">
+          <div class="mini-spin-teal"></div><span>Loading officials...</span>
+        </div>
+
+        <div class="ov-empty" *ngIf="!officialsLoading && filteredOfficials.length === 0">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <p>No officials found{{ officialsSearch ? ' matching "' + officialsSearch + '"' : '' }}.</p>
+        </div>
+
+        <div class="officials-grid" *ngIf="!officialsLoading && filteredOfficials.length > 0">
+          <div class="official-card" *ngFor="let o of filteredOfficials">
+            <div class="oc-avatar">
+              <img *ngIf="o.profile_picture_url" [src]="o.profile_picture_url" [alt]="o.name" />
+              <span *ngIf="!o.profile_picture_url">{{ o.name.charAt(0).toUpperCase() }}</span>
+            </div>
+            <div class="oc-info">
+              <div class="oc-name">{{ o.name }}</div>
+              <div class="oc-dept">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                {{ o.department }}
+              </div>
+              <div class="oc-loc" *ngIf="o.location">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {{ o.location }}
+              </div>
+              <div class="oc-id" *ngIf="o.department_id">ID: {{ o.department_id }}</div>
+            </div>
+            <div class="oc-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Verified
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANALYTICS TAB -->
+      <div class="analytics-view" *ngIf="activeNav === 'analytics'">
+        <div class="av-header">
+          <h2 class="av-title">Civic Analytics</h2>
+          <p class="av-sub">Petition activity and engagement insights for your locality.</p>
+        </div>
+
+        <div class="ov-loading" *ngIf="analyticsLoading">
+          <div class="mini-spin-teal"></div><span>Loading analytics...</span>
+        </div>
+
+        <div *ngIf="!analyticsLoading">
+          <!-- KPI Cards -->
+          <div class="av-kpi-grid">
+            <div class="av-kpi-card av-blue">
+              <div class="av-kpi-val">{{ analyticsTotal }}</div>
+              <div class="av-kpi-label">Total Petitions</div>
+            </div>
+            <div class="av-kpi-card av-green">
+              <div class="av-kpi-val">{{ analyticsActive }}</div>
+              <div class="av-kpi-label">Active</div>
+            </div>
+            <div class="av-kpi-card av-amber">
+              <div class="av-kpi-val">{{ analyticsReview }}</div>
+              <div class="av-kpi-label">Under Review</div>
+            </div>
+            <div class="av-kpi-card av-teal">
+              <div class="av-kpi-val">{{ analyticsResolved }}</div>
+              <div class="av-kpi-label">Resolved / Closed</div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="av-charts-row">
+            <!-- Category Breakdown -->
+            <div class="av-chart-card">
+              <h3 class="av-chart-title">By Category</h3>
+              <div class="av-bars">
+                <div *ngFor="let c of analyticsByCategory" class="av-bar-row">
+                  <span class="av-bar-label">{{ c.key }}</span>
+                  <div class="av-bar-track">
+                    <div class="av-bar-fill" [style.width.%]="c.pct" [style.background]="categoryColor(c.key)"></div>
+                  </div>
+                  <span class="av-bar-count">{{ c.count }}</span>
+                </div>
+                <div *ngIf="analyticsByCategory.length === 0" class="av-empty">No data yet.</div>
+              </div>
+            </div>
+
+            <!-- Status Distribution -->
+            <div class="av-chart-card">
+              <h3 class="av-chart-title">By Status</h3>
+              <div class="av-bars">
+                <div *ngFor="let s of analyticsByStatus" class="av-bar-row">
+                  <span class="av-bar-label">{{ s.label }}</span>
+                  <div class="av-bar-track">
+                    <div class="av-bar-fill" [ngClass]="statusClass(s.key)" [style.width.%]="s.pct"></div>
+                  </div>
+                  <span class="av-bar-count">{{ s.count }} <span class="av-pct">({{ s.pct }}%)</span></span>
+                </div>
+                <div *ngIf="analyticsByStatus.length === 0" class="av-empty">No data yet.</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
     </main>

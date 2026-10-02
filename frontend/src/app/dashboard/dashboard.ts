@@ -6,6 +6,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Auth, UserResponse } from '../auth/auth';
 import { Petitions } from '../petitions/petitions';
 import { PollsList } from '../polls/polls-list';
+import { PetitionService, OfficialDirectoryItem } from '../services/petition';
 
 export interface Toast {
   id: number;
@@ -118,7 +119,8 @@ export class Dashboard implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private authService: Auth,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private petitionService: PetitionService
   ) {}
 
   getSafeSvg(svgString: string): SafeHtml {
@@ -148,6 +150,8 @@ export class Dashboard implements OnInit {
     this.route.queryParams.subscribe((params) => {
       if (params['tab']) {
         this.activeNav = params['tab'];
+        if (params['tab'] === 'officials') this.loadOfficials();
+        if (params['tab'] === 'analytics') this.loadAnalytics();
       } else if (params['title'] || params['id']) {
         this.activeNav = 'petitions';
       }
@@ -356,12 +360,10 @@ export class Dashboard implements OnInit {
   setNav(nav: string, navigateRouter: boolean = true) {
     this.activeNav = nav;
     this.mobileSidebarOpen = false;
+    if (nav === 'officials') this.loadOfficials();
+    if (nav === 'analytics') this.loadAnalytics();
     if (navigateRouter) {
-      if (['petitions', 'polls', 'settings'].includes(nav)) {
-        this.router.navigate(['/citizen/dashboard'], { queryParams: { tab: nav } });
-      } else {
-        this.router.navigate(['/' + nav]);
-      }
+      this.router.navigate(['/citizen/dashboard'], { queryParams: { tab: nav } });
     }
   }
 
@@ -556,6 +558,87 @@ export class Dashboard implements OnInit {
   finishAppTour() {
     this.showAppTour = false;
     this.showToast('🎉 You have completed the CIVIX Platform Tour!', 'success');
+  }
+
+  // Officials Directory
+  officials: OfficialDirectoryItem[] = [];
+  officialsLoading = false;
+  officialsSearch = '';
+
+  get filteredOfficials(): OfficialDirectoryItem[] {
+    if (!this.officialsSearch.trim()) return this.officials;
+    const q = this.officialsSearch.toLowerCase();
+    return this.officials.filter(o =>
+      o.name.toLowerCase().includes(q) ||
+      o.department.toLowerCase().includes(q) ||
+      o.location.toLowerCase().includes(q)
+    );
+  }
+
+  loadOfficials() {
+    if (this.officials.length) return;
+    this.officialsLoading = true;
+    this.petitionService.getOfficialsDirectory().subscribe({
+      next: (list) => { this.officials = list; this.officialsLoading = false; },
+      error: () => { this.officialsLoading = false; }
+    });
+  }
+
+  // Analytics
+  analyticsLoading = false;
+  analyticsPetitions: any[] = [];
+
+  get analyticsTotal()   { return this.analyticsPetitions.length; }
+  get analyticsActive()  { return this.analyticsPetitions.filter(p => p.status === 'active').length; }
+  get analyticsReview()  { return this.analyticsPetitions.filter(p => p.status === 'under_review').length; }
+  get analyticsResolved(){ return this.analyticsPetitions.filter(p => p.status === 'resolved' || p.status === 'closed').length; }
+
+  get analyticsByCategory(): { key: string; count: number; pct: number }[] {
+    const map: Record<string, number> = {};
+    this.analyticsPetitions.forEach(p => { map[p.category] = (map[p.category] || 0) + 1; });
+    const total = this.analyticsPetitions.length || 1;
+    return Object.entries(map)
+      .map(([key, count]) => ({ key, count, pct: Math.round((count / total) * 100) }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  get analyticsByStatus(): { key: string; label: string; count: number; pct: number }[] {
+    const labels: Record<string, string> = {
+      active: 'Active', under_review: 'Under Review',
+      in_progress: 'In Progress', resolved: 'Resolved', closed: 'Closed'
+    };
+    const map: Record<string, number> = {};
+    this.analyticsPetitions.forEach(p => { map[p.status] = (map[p.status] || 0) + 1; });
+    const total = this.analyticsPetitions.length || 1;
+    return Object.entries(map)
+      .map(([key, count]) => ({ key, label: labels[key] || key, count, pct: Math.round((count / total) * 100) }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  loadAnalytics() {
+    if (this.analyticsPetitions.length) return;
+    this.analyticsLoading = true;
+    this.petitionService.getPetitions({ page: 1, per_page: 100 }).subscribe({
+      next: (res) => { this.analyticsPetitions = res.petitions || []; this.analyticsLoading = false; },
+      error: () => { this.analyticsLoading = false; }
+    });
+  }
+
+  categoryColor(key: string): string {
+    const map: Record<string, string> = {
+      'Environment': '#10b981', 'Infrastructure': '#3b82f6',
+      'Education': '#8b5cf6', 'Public Safety': '#ef4444',
+      'Transportation': '#f59e0b', 'Healthcare': '#ec4899', 'Housing': '#06b6d4'
+    };
+    return map[key] || '#94a3b8';
+  }
+
+  statusClass(key: string): string {
+    const map: Record<string, string> = {
+      active: 'st-active', under_review: 'st-review',
+      in_progress: 'st-progress', resolved: 'st-resolved', closed: 'st-closed'
+    };
+    return map[key] || '';
   }
 
   requestAccountErasure() {

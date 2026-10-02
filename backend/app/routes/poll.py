@@ -149,8 +149,10 @@ def list_polls(
 
     # Filter out drafts for non-creator / public
     if current_user.role == UserRole.official:
-        # Officials see all non-drafts or their own drafts
+        # Officials see all non-drafts or their own drafts within their department
         query = query.filter((Poll.status != PollStatus.draft) | (Poll.created_by == current_user.id))
+        if current_user.department:
+            query = query.filter(Poll.category == current_user.department)
     else:
         query = query.filter(Poll.status != PollStatus.draft)
 
@@ -225,6 +227,14 @@ def get_poll_detail(
             status_code=http_status.HTTP_404_NOT_FOUND,
             detail={"code": "poll_not_found", "message": "Poll not found"}
         )
+
+    if current_user.role == UserRole.official and current_user.department:
+        cat_str = poll.category.value if hasattr(poll.category, 'value') else str(poll.category)
+        if cat_str != current_user.department:
+            raise HTTPException(
+                status_code=http_status.HTTP_403_FORBIDDEN,
+                detail={"code": "access_denied", "message": f"Access denied. As an Official of the '{current_user.department}' department, you can only view polls related to your department."}
+            )
 
     # Draft access check
     eff_status = _resolve_effective_status(poll)
@@ -432,6 +442,14 @@ def get_poll_results(
             status_code=http_status.HTTP_404_NOT_FOUND,
             detail={"code": "poll_not_found", "message": "Poll not found."}
         )
+
+    if current_user.role == UserRole.official and current_user.department:
+        cat_str = poll.category.value if hasattr(poll.category, 'value') else str(poll.category)
+        if cat_str != current_user.department:
+            raise HTTPException(
+                status_code=http_status.HTTP_403_FORBIDDEN,
+                detail={"code": "access_denied", "message": f"Access denied. As an Official of the '{current_user.department}' department, you can only view poll results related to your department."}
+            )
 
     total_votes = len(poll.votes) if poll.votes is not None else 0
 

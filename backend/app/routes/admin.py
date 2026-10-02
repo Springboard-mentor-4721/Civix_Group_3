@@ -18,6 +18,8 @@ from app.routes.auth import get_current_user, _create_password_change_token
 from app.utils.email import send_verification_approved_email, send_verification_rejected_email, send_official_approved_with_credentials
 from app.utils.security import hash_password
 
+from app.routes.petition import _filter_official_dept_query, _build_petition_dict
+
 router = APIRouter(prefix="/api/official", tags=["Official Portal"])
 
 
@@ -30,7 +32,10 @@ def _utcnow() -> datetime:
 def require_verified_official(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role != UserRole.official:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Officials only")
-    if current_user.verification_status != VerificationStatus.verified:
+    v_stat = current_user.verification_status
+    if v_stat and hasattr(v_stat, 'value'):
+        v_stat = v_stat.value
+    if v_stat in [VerificationStatus.rejected.value, "rejected"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Your official account is not verified. Access denied.",
@@ -61,17 +66,7 @@ def _sig_count(db: Session, petition_id: int) -> int:
 
 
 def _build_petition(p: Petition, sig_count: int) -> dict:
-    try:
-        photos_data = [{"id": photo.id, "url": photo.url} for photo in (p.photos or [])]
-    except Exception:
-        photos_data = []
-    return {
-        "id": p.id, "title": p.title, "description": p.description,
-        "category": p.category, "location": p.location, "status": p.status,
-        "signature_goal": p.signature_goal, "signature_count": sig_count,
-        "creator_id": p.creator_id, "created_at": p.created_at, "updated_at": p.updated_at,
-        "photos": photos_data,
-    }
+    return _build_petition_dict(p, sig_count)
 
 
 # ── Dashboard stats ────────────────────────────────────────────────────────────
@@ -84,32 +79,30 @@ def official_dashboard(
     """Real-time dashboard statistics for the official portal."""
     base = db.query(Petition)
 
-    # Filter by department (category) and location
     if official.department:
-        base = base.filter(Petition.category == official.department)
-    if official.jurisdiction:
-        base = base.filter(Petition.location.ilike(f"%{official.jurisdiction}%"))
-    elif official.location:
-        base = base.filter(Petition.location.ilike(f"%{official.location}%"))
+        base = _filter_official_dept_query(base, official.department)
 
-    total        = base.count()
-    active       = base.filter(Petition.status == PetitionStatus.active).count()
-    under_review = base.filter(Petition.status == PetitionStatus.under_review).count()
-    in_progress  = base.filter(Petition.status == PetitionStatus.in_progress).count()
-    resolved     = base.filter(Petition.status == PetitionStatus.resolved).count()
-    closed       = base.filter(Petition.status == PetitionStatus.closed).count()
+    petitions = base.all()
+    total = len(petitions)
+    
+    def _status_str(p):
+        return p.status.value if hasattr(p.status, "value") else str(p.status)
 
+    active       = sum(1 for p in petitions if _status_str(p) == "active")
+    under_review = sum(1 for p in petitions if _status_str(p) == "under_review")
+    in_progress  = sum(1 for p in petitions if _status_str(p) == "in_progress")
+    resolved     = sum(1 for p in petitions if _status_str(p) == "resolved")
+    closed       = sum(1 for p in petitions if _status_str(p) == "closed")
+
+    ids = [p.id for p in petitions]
     total_signatures = (
         db.query(Signature)
-        .join(Petition, Petition.id == Signature.petition_id)
-        .filter(
-            Petition.category == official.department if official.department else True,
-        )
-        .count()
+        .filter(Signature.petition_id.in_(ids))
+        .count() if ids else 0
     )
 
     return {
-        "jurisdiction": official.jurisdiction or official.location or "All",
+        "jurisdiction": official.location or "All",
         "department": official.department or "All",
         "total_petitions": total,
         "active": active,
@@ -128,22 +121,15 @@ def list_petitions(
     petition_status: str | None = None,
     category: str | None = None,
     page: int = 1,
-    per_page: int = 20,
+    per_page: int = 100,
     official: User = Depends(require_verified_official),
     db: Session = Depends(get_db),
 ):
-    """List petitions filtered by official's department (category) and location."""
+    """List petitions filtered by official's department (category)."""
     query = db.query(Petition)
 
-    # Filter by department — official only sees petitions matching their department category
     if official.department:
-        query = query.filter(Petition.category == official.department)
-
-    # Also filter by jurisdiction/location if set
-    if official.jurisdiction:
-        query = query.filter(Petition.location.ilike(f"%{official.jurisdiction}%"))
-    elif official.location:
-        query = query.filter(Petition.location.ilike(f"%{official.location}%"))
+        query = _filter_official_dept_query(query, official.department)
 
     if petition_status:
         try:
@@ -151,7 +137,7 @@ def list_petitions(
         except ValueError:
             pass
     if category:
-        query = query.filter(Petition.category == category)
+        query = _filter_official_dept_query(query, category)
 
     total = query.count()
     petitions = (
@@ -161,7 +147,7 @@ def list_petitions(
         .all()
     )
     return {
-        "petitions": [_build_petition(p, _sig_count(db, p.id)) for p in petitions],
+        "petitions": [_build_petition_dict(p, _sig_count(db, p.id)) for p in petitions],
         "total": total, "page": page, "per_page": per_page,
     }
 
@@ -246,7 +232,7 @@ def add_official_response(
     return {
         "id": resp.id, "petition_id": resp.petition_id, "official_id": resp.official_id,
         "official_name": official.name, "response_text": resp.response_text,
-        "action_taken": resp.action_taken, "created_at": resp.created_at, "updated_at": resp.updated_at,
+        "action_taken": resp.action_taken, "created_at": resp.created_at,
     }
 
 
@@ -273,13 +259,13 @@ def get_pending_verifications(
         ov = db.query(OfficialVerification).filter(OfficialVerification.user_id == u.id).first()
         result.append({
             "id": u.id, "name": u.name, "email": u.email,
-            "organization": u.organization, "department": u.department,
-            "designation": u.designation, "official_id": u.official_id,
-            "jurisdiction": u.jurisdiction, "phone": u.phone,
+            "organization": None, "department": u.department,
+            "designation": None, "official_id": u.department_id,
+            "jurisdiction": u.location, "phone": None,
             "location": u.location,
-            "verification_submitted_at": u.verification_submitted_at,
+            "verification_submitted_at": u.created_at,
             "verification_status": u.verification_status,
-            "notes": ov.notes if ov else None,
+            "notes": ov.rejection_reason if ov else None,
             "document_url": ov.document_url if ov else None,
         })
     return result
@@ -294,10 +280,10 @@ def get_all_officials(
     return [
         {
             "id": u.id, "name": u.name, "email": u.email,
-            "organization": u.organization, "department": u.department,
-            "designation": u.designation, "jurisdiction": u.jurisdiction,
+            "organization": None, "department": u.department,
+            "designation": None, "jurisdiction": u.location,
             "verification_status": u.verification_status,
-            "is_email_verified": u.is_email_verified,
+            "is_email_verified": u.email_verified,
             "created_at": u.created_at,
         }
         for u in users
@@ -332,16 +318,12 @@ def review_official(
         temp_password = ''.join(secrets.choice(alphabet) for _ in range(12))
 
         user.verification_status = VerificationStatus.verified
-        user.verification_reviewed_at = _utcnow()
-        user.verification_reviewed_by = reviewer.id
-        user.verification_rejection_reason = None
         user.department_id = dept_id
         user.password = hash_password(temp_password)
         user.must_change_password = True
         if ov:
             ov.status = VerificationStatus.verified
             ov.reviewed_at = _utcnow()
-            ov.reviewed_by = reviewer.id
         _audit(db, reviewer.id, "official_verification_approved", "user", user_id)
         db.commit()
 
@@ -355,13 +337,9 @@ def review_official(
     elif action == "reject":
         reason = payload.get("reason", "")
         user.verification_status = VerificationStatus.rejected
-        user.verification_reviewed_at = _utcnow()
-        user.verification_reviewed_by = reviewer.id
-        user.verification_rejection_reason = reason
         if ov:
             ov.status = VerificationStatus.rejected
             ov.reviewed_at = _utcnow()
-            ov.reviewed_by = reviewer.id
             ov.rejection_reason = reason
         _audit(db, reviewer.id, "official_verification_rejected", "user", user_id, {"reason": reason})
         db.commit()

@@ -192,8 +192,8 @@ export class Petitions implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('document:keydown.escape', ['$event'])
-  onKeydownHandler(event: KeyboardEvent) {
+  @HostListener('document:keydown.escape')
+  onKeydownHandler() {
     if (this.zoomedPhotoUrl) {
       this.closePhotoZoom();
     }
@@ -832,6 +832,10 @@ export class Petitions implements OnInit, OnDestroy {
       this.toasts = this.toasts.filter((t) => t.id !== id);
       this.cdr.detectChanges();
     }, 4000);
+  }
+
+  removeToast(id: number) {
+    this.dismissToast(id);
   }
 
   dismissToast(id: number) {

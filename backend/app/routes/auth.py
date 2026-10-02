@@ -103,6 +103,15 @@ def _gen_temp_password(length: int = 12) -> str:
     return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
+
+
+def _create_password_change_token(user: User, db: Session) -> str:
+    raw_token = _gen_token()
+    user.password_reset_token_hash = _hash_token(raw_token)
+    user.password_reset_token_expires_at = _utcnow() + timedelta(minutes=PASSWORD_RESET_EXPIRE_MINUTES)
+    db.commit()
+    return raw_token
+
 def _gen_dept_id(department: str) -> str:
     prefix = "".join(w[0].upper() for w in department.split()[:3])
     return f"{prefix}-{secrets.randbelow(9000) + 1000}"
@@ -120,7 +129,13 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Session expired. Please login again.",
         )
-    payload = decode_access_token(token)
+    try:
+        payload = decode_access_token(token)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": str(e), "message": "Session expired. Please login again."},
+        )
     user = db.query(User).filter(User.id == payload["user_id"]).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")

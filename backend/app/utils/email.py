@@ -300,3 +300,79 @@ def send_poll_notification_email(
 """)
     subject = f"Civix — Official Poll Created: {poll_title[:50]}" if is_creator else f"Civix — New Civic Poll in {poll_location}: {poll_title[:50]}"
     _send_html(to_email, subject, html)
+
+def send_verification_approved_email(to_email: str, name: str) -> None:
+    login_link = f"{FRONTEND_URL}/login"
+    html = _html_wrapper(f"""
+<h2>Verification Approved</h2>
+<p>Hello {name},</p>
+<p>Your official account verification has been approved. You now have full access to official dashboard features.</p>
+<a href="{login_link}" class="btn">Log In to CIVIX</a>
+""")
+    _send_html(to_email, "Civix ? Verification Approved", html)
+
+
+def send_verification_rejected_email(to_email: str, name: str, reason: str = "") -> None:
+    html = _html_wrapper(f"""
+<h2>Verification Update</h2>
+<p>Hello {name},</p>
+<p>Your official verification request was not approved.</p>
+<p><strong>Reason:</strong> {reason if reason else 'Documentation did not meet criteria.'}</p>
+<p>Please contact your administrator or re-upload valid credentials.</p>
+""")
+    _send_html(to_email, "Civix ? Verification Update", html)
+
+
+def send_official_approved_with_credentials(
+    to_email: str,
+    name: str,
+    dept_id: str,
+    temp_password: str,
+    token: str = None
+) -> None:
+    login_link = f"{FRONTEND_URL}/change-password?token={token}" if token else f"{FRONTEND_URL}/login"
+    html = _html_wrapper(f"""
+<h2>Welcome to CIVIX, {name}!</h2>
+<p>Your official account has been approved and activated. Below are your temporary login details:</p>
+<table>
+  <tr><th>Information</th><th>Details</th></tr>
+  <tr><td>Email</td><td>{to_email}</td></tr>
+  <tr><td>Temporary Password</td><td>{temp_password}</td></tr>
+  <tr><td>Department ID</td><td>{dept_id}</td></tr>
+</table>
+<a href="{login_link}" class="btn">Set Your Password & Log In</a>
+""")
+    _send_html(to_email, "Civix — Official Account Approved", html)
+
+
+def send_petition_report_email(
+    to_email: str,
+    creator_name: str,
+    petition_title: str,
+    petition_category: str,
+    petition_location: str,
+    status: str,
+    signature_count: int,
+    signature_goal: int,
+    official_responses_count: int,
+    created_at_str: str,
+    official_department: str
+) -> None:
+    html = _html_wrapper(f"""
+<h2>CIVIX Official Petition Report</h2>
+<p>Hello {creator_name},</p>
+<p>An official report for your petition <strong>"{petition_title}"</strong> has been issued by the <strong>{official_department}</strong>.</p>
+<table>
+  <tr><th>Field</th><th>Details</th></tr>
+  <tr><td>Petition Title</td><td>{petition_title}</td></tr>
+  <tr><td>Category</td><td>{petition_category}</td></tr>
+  <tr><td>Jurisdiction</td><td>{petition_location}</td></tr>
+  <tr><td>Filing Date & Time</td><td>{created_at_str}</td></tr>
+  <tr><td>Current Status</td><td>{status.upper()}</td></tr>
+  <tr><td>Citizen Backing</td><td>{signature_count} / {signature_goal} Signatures</td></tr>
+  <tr><td>Official Statements</td><td>{official_responses_count} Published Statements</td></tr>
+</table>
+<p style="margin-top:16px;">You can view full evidence photos, response statements, and progress on the CIVIX Portal.</p>
+<a href="{FRONTEND_URL}/login" class="btn">View Live Petition Report</a>
+""")
+    _send_html(to_email, f"CIVIX Official Report: {petition_title[:50]}", html)

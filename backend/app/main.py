@@ -11,33 +11,35 @@ from app.database import engine, Base
 from app.routes.auth import router as auth_router
 from app.routes.petition import router as petition_router
 from app.routes.poll import router as poll_router
+from app.routes.admin import router as admin_router
+from app.routes.reports import router as reports_router
 from app.models import user, petition, signature, official_response, poll  # noqa: F401
 
 load_dotenv()
 
 APP_NAME     = os.getenv("APP_NAME", "Civix API")
 APP_VERSION  = os.getenv("APP_VERSION", "1.0.0")
-CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:4200").split(",")]
+CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:4200,http://localhost:4201").split(",")]
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
         Base.metadata.create_all(bind=engine)
-        print("✅ Database tables ready")
+        print("[OK] Database tables ready")
         from app.db_migration import sync_schema_columns
         sync_schema_columns(engine)
-        print("✅ Database tables ready and synchronized")
+        print("[OK] Database tables ready and synchronized")
     except OperationalError as e:
         code = e.orig.args[0] if e.orig else 0
         msg  = e.orig.args[1] if e.orig else str(e)
         errors = {
             1045: "DB Error: Wrong username or password. Check DB_USER and DB_PASSWORD in .env",
-            1049: "DB Error: Database does not exist → run: CREATE DATABASE civix_db;",
+            1049: "DB Error: Database does not exist -> run: CREATE DATABASE civix_db;",
             2003: "DB Error: Cannot connect to MySQL. Make sure MySQL is running.",
             2005: "DB Error: Unknown host. Check DB_HOST in .env",
         }
-        print(f"\n❌ {errors.get(code, f'DB Error ({code}): {msg}')}\n")
+        print(f"\n[ERROR] {errors.get(code, f'DB Error ({code}): {msg}')}\n")
         sys.exit(1)
     yield
 
@@ -62,8 +64,9 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(petition_router)
 app.include_router(poll_router)
+app.include_router(admin_router)
+app.include_router(reports_router)
 
-# Serve static assets (email images)
 _static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.isdir(_static_dir):
     app.mount("/static", StaticFiles(directory=_static_dir), name="static")

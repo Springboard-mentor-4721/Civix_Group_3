@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status as http_status
+from fastapi import APIRouter, Depends, HTTPException, status as http_status, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.database import get_db, SessionLocal
@@ -16,10 +16,64 @@ from app.schemas.petition import (
 from app.routes.auth import get_current_user, require_official
 from app.models.user import User, UserRole
 from app.utils.cloudinary_utils import upload_base64_image
-from app.utils.email import send_petition_notification_email
+from app.utils.email import send_petition_notification_email, send_petition_report_email
 import threading
 
 router = APIRouter(prefix="/api/petitions", tags=["Petitions"])
+
+from sqlalchemy import String
+
+DEPT_TO_CATEGORY_MAP = {
+    "environment": PetitionCategory.environment,
+    "infrastructure": PetitionCategory.infrastructure,
+    "education": PetitionCategory.education,
+    "public safety": PetitionCategory.public_safety,
+    "public_safety": PetitionCategory.public_safety,
+    "transportation": PetitionCategory.transportation,
+    "healthcare": PetitionCategory.healthcare,
+    "housing": PetitionCategory.housing,
+    "sanitation": PetitionCategory.environment,
+    "waste management": PetitionCategory.environment,
+    "sanitation & waste management": PetitionCategory.environment,
+    "water supply": PetitionCategory.infrastructure,
+    "roads": PetitionCategory.infrastructure,
+    "public works": PetitionCategory.infrastructure,
+}
+
+
+def _get_matching_category(department_str: str | None) -> PetitionCategory | None:
+    if not department_str:
+        return None
+    dept_clean = department_str.strip().lower()
+    if dept_clean in ["municipal department", "general", "all", "official", "admin", "civix", ""]:
+        return None
+    for cat in PetitionCategory:
+        if cat.value.lower() == dept_clean or cat.name.lower() == dept_clean:
+            return cat
+    return DEPT_TO_CATEGORY_MAP.get(dept_clean)
+
+
+def _filter_official_dept_query(query, department_str: str | None):
+    if not department_str:
+        return query
+    matched_cat = _get_matching_category(department_str)
+    if matched_cat:
+        return query.filter(Petition.category == matched_cat)
+    return query
+
+
+def _is_official_dept_match(department_str: str | None, petition_category) -> bool:
+    if not department_str:
+        return True
+    dept_clean = department_str.strip().lower()
+    if dept_clean in ["municipal department", "general", "all", "official", "admin", "civix", ""]:
+        return True
+    matched_cat = _get_matching_category(department_str)
+    if matched_cat:
+        pet_cat_val = petition_category.value if hasattr(petition_category, "value") else str(petition_category)
+        return pet_cat_val.lower() == matched_cat.value.lower() or str(petition_category).lower() == matched_cat.name.lower()
+    pet_cat_str = (petition_category.value if hasattr(petition_category, "value") else str(petition_category)).lower()
+    return pet_cat_str in dept_clean or dept_clean in pet_cat_str
 
 
 def _build_petition_dict(petition: Petition, signature_count: int, photos_list=None) -> dict:
@@ -27,7 +81,7 @@ def _build_petition_dict(petition: Petition, signature_count: int, photos_list=N
         photos_data = photos_list
     else:
         try:
-            photos_data = [{"id": p.id, "url": p.url} for p in (petition.photos or [])]
+            photos_data = [p.url if hasattr(p, "url") else str(p) for p in (petition.photos or [])]
         except Exception:
             photos_data = []
 
@@ -40,20 +94,25 @@ def _build_petition_dict(petition: Petition, signature_count: int, photos_list=N
     except Exception:
         pass
 
+    cat_val = petition.category.value if hasattr(petition.category, "value") else str(petition.category or "")
+    st_val = petition.status.value if hasattr(petition.status, "value") else str(petition.status or "")
+    created_val = petition.created_at.isoformat() if hasattr(petition.created_at, "isoformat") else (str(petition.created_at) if petition.created_at else None)
+    updated_val = petition.updated_at.isoformat() if hasattr(petition.updated_at, "isoformat") else (str(petition.updated_at) if petition.updated_at else None)
+
     return {
         "id": petition.id,
         "title": petition.title,
         "description": petition.description,
-        "category": petition.category,
+        "category": cat_val,
         "location": petition.location,
-        "status": petition.status,
+        "status": st_val,
         "signature_goal": petition.signature_goal,
         "signature_count": signature_count,
         "creator_id": petition.creator_id,
         "creator_name": creator_name,
         "creator_profile_picture_url": creator_profile_pic,
-        "created_at": petition.created_at,
-        "updated_at": petition.updated_at,
+        "created_at": created_val,
+        "updated_at": updated_val,
         "photos": photos_data,
     }
 
@@ -160,16 +219,14 @@ def official_dashboard(
 ):
     query = db.query(Petition)
     if current_user.department:
-        query = query.filter(Petition.category == current_user.department)
-    if current_user.location:
-        query = query.filter(Petition.location.ilike(f"%{current_user.location}%"))
+        query = _filter_official_dept_query(query, current_user.department)
 
     petitions = query.all()
     ids = [p.id for p in petitions]
     total_sigs = db.query(Signature).filter(Signature.petition_id.in_(ids)).count() if ids else 0
 
     def _count(s: PetitionStatus) -> int:
-        return sum(1 for p in petitions if p.status == s)
+        return sum(1 for p in petitions if p.status == s or (hasattr(p.status, "value") and p.status.value == s.value))
 
     return DashboardStats(
         total_petitions=len(petitions),
@@ -196,9 +253,7 @@ def official_petition_list(
 ):
     query = db.query(Petition)
     if current_user.department:
-        query = query.filter(Petition.category == current_user.department)
-    if current_user.location:
-        query = query.filter(Petition.location.ilike(f"%{current_user.location}%"))
+        query = _filter_official_dept_query(query, current_user.department)
     if petition_status:
         query = query.filter(Petition.status == petition_status)
 
@@ -233,7 +288,7 @@ def get_petitions(
 
     # Officials can ONLY see petitions in their assigned department
     if current_user.role == UserRole.official and current_user.department:
-        query = query.filter(Petition.category == current_user.department)
+        query = _filter_official_dept_query(query, current_user.department)
 
     if location:
         query = query.filter(Petition.location == location)
@@ -320,7 +375,7 @@ def get_petition(
         raise HTTPException(status_code=404, detail="Petition not found")
 
     if current_user.role == UserRole.official and current_user.department:
-        if petition.category != current_user.department:
+        if not _is_official_dept_match(current_user.department, petition.category):
             raise HTTPException(
                 status_code=403,
                 detail=f"Access denied. As an Official of the '{current_user.department}' department, you can only view petitions related to your department."
@@ -343,9 +398,11 @@ def get_petition(
             "id": r.id,
             "petition_id": r.petition_id,
             "official_id": r.official_id,
-            "response_text": r.response_text,
+            "official_name": getattr(r, "official_name", None) or (r.official.name if getattr(r, "official", None) else None),
+            "response": getattr(r, "response", None) or getattr(r, "response_text", ""),
+            "response_text": getattr(r, "response_text", None) or getattr(r, "response", ""),
             "action_taken": r.action_taken,
-            "created_at": r.created_at,
+            "created_at": r.created_at.isoformat() if hasattr(r.created_at, "isoformat") else (str(r.created_at) if r.created_at else None),
         }
         for r in responses
     ]
@@ -463,6 +520,27 @@ def sign_petition(
     return {"signature_count": signature_count, "has_signed": True}
 
 
+# ── Public Officials Directory (citizens) ─────────────────────────────────────
+
+@router.get("/officials/directory")
+def officials_directory(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    officials = db.query(User).filter(User.role == UserRole.official, User.face_verified == True).all()
+    return [
+        {
+            "id": u.id,
+            "name": u.name,
+            "department": u.department or "Municipal Administration",
+            "department_id": u.department_id or "",
+            "location": u.location or "",
+            "profile_picture_url": u.profile_picture_url,
+        }
+        for u in officials
+    ]
+
+
 # ── Add Official Response ──────────────────────────────────────────────────────
 
 @router.post("/{petition_id}/respond", response_model=OfficialResponseOut, status_code=http_status.HTTP_201_CREATED)
@@ -486,3 +564,45 @@ def add_official_response(
     db.commit()
     db.refresh(resp)
     return resp
+
+
+# ── Send Report to Creator via Email ──────────────────────────────────────────
+
+@router.post("/{petition_id}/send-report-email")
+def send_petition_report_to_creator(
+    petition_id: int,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(require_official),
+    db: Session = Depends(get_db),
+):
+    petition = db.query(Petition).filter(Petition.id == petition_id).first()
+    if not petition:
+        raise HTTPException(status_code=404, detail="Petition not found")
+
+    creator = petition.creator
+    if not creator or not creator.email:
+        raise HTTPException(status_code=400, detail="Petition creator email not found.")
+
+    sig_count = _get_signature_count(db, petition_id)
+    resp_count = db.query(OfficialResponse).filter(OfficialResponse.petition_id == petition_id).count()
+    created_at_str = petition.created_at.strftime("%Y-%m-%d %H:%M UTC") if petition.created_at else "N/A"
+
+    cat_val = petition.category.value if hasattr(petition.category, "value") else str(petition.category)
+    stat_val = petition.status.value if hasattr(petition.status, "value") else str(petition.status)
+
+    background_tasks.add_task(
+        send_petition_report_email,
+        to_email=creator.email,
+        creator_name=creator.name or "Citizen",
+        petition_title=petition.title,
+        petition_category=cat_val,
+        petition_location=petition.location,
+        status=stat_val,
+        signature_count=sig_count,
+        signature_goal=petition.signature_goal,
+        official_responses_count=resp_count,
+        created_at_str=created_at_str,
+        official_department=current_user.department or "Municipal Department"
+    )
+
+    return {"message": f"Official petition report email dispatched to creator ({creator.email})."}

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { PollsService, PollResponse, PollStatus } from './polls.service';
-import { Auth } from '../auth/auth';
+import { Auth, UserResponse } from '../auth/auth';
 
 @Component({
   selector: 'app-official-polls',
@@ -18,20 +18,35 @@ export class OfficialPolls implements OnInit {
   errorMessage = '';
   successMessage = '';
 
-  // Layout Shell & User state
-  userName: string = 'Municipal Officer';
-  userRole: string = 'official';
-  userDepartment: string = 'Municipal Administration';
-  userProfilePic: string | null = null;
-  sidebarCollapsed: boolean = false;
-  mobileSidebarOpen: boolean = false;
-  logoutConfirmOpen: boolean = false;
-  loggingOut: boolean = false;
-
   activeTab: 'all' | 'mine' | 'active' | 'scheduled' | 'closed' | 'draft' = 'all';
+  searchQuery: string = '';
+  categoryFilter: string = 'all';
 
   deleteConfirmId: number | null = null;
   deleting = false;
+
+  // Sidebar and Shell state
+  sidebarCollapsed = false;
+  mobileSidebarOpen = false;
+  logoutConfirmOpen = false;
+  loggingOut = false;
+
+  currentUser: UserResponse | null = null;
+  userName = 'Official';
+  userDepartment = 'Municipal Department';
+  userProfilePic: string | null = null;
+
+  categories: string[] = [
+    'All Categories',
+    'Infrastructure',
+    'Environment',
+    'Public Safety',
+    'Transportation',
+    'Education',
+    'Healthcare',
+    'Housing',
+    'Other'
+  ];
 
   constructor(
     private pollsService: PollsService,
@@ -42,26 +57,24 @@ export class OfficialPolls implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const u = this.authService.getUser();
-    if (u) {
-      this.userName = u.name || 'Official';
-      this.userRole = u.role || 'official';
-      this.userDepartment = u.department || 'Municipal Administration';
-      this.userProfilePic = u.profile_picture_url || null;
+    this.currentUser = this.authService.getUser();
+    if (this.currentUser) {
+      this.userName = this.currentUser.name || 'Official';
+      this.userDepartment = this.currentUser.department || 'Municipal Department';
+      this.userProfilePic = this.currentUser.profile_picture_url || null;
     }
     this.authService.getMe().subscribe({
-      next: (user) => {
-        if (user) {
-          this.userName = user.name || 'Official';
-          this.userRole = user.role || 'official';
-          this.userDepartment = user.department || 'Municipal Administration';
-          this.userProfilePic = user.profile_picture_url || null;
-          this.cdr.detectChanges();
+      next: (u) => {
+        this.currentUser = u;
+        if (u) {
+          this.userName = u.name || this.userName;
+          this.userDepartment = u.department || this.userDepartment;
+          this.userProfilePic = u.profile_picture_url || null;
         }
+        this.cdr.detectChanges();
       },
       error: () => {}
     });
-
     this.loadPolls();
   }
 
@@ -115,6 +128,39 @@ export class OfficialPolls implements OnInit {
     }
   }
 
+  get filteredPolls(): PollResponse[] {
+    let list = this.polls;
+    if (this.categoryFilter !== 'all' && this.categoryFilter !== 'All Categories') {
+      list = list.filter(p => p.category?.toLowerCase() === this.categoryFilter.toLowerCase());
+    }
+    if (this.searchQuery.trim()) {
+      const q = this.searchQuery.toLowerCase();
+      list = list.filter(p =>
+        p.title?.toLowerCase().includes(q) ||
+        p.question?.toLowerCase().includes(q) ||
+        p.category?.toLowerCase().includes(q) ||
+        p.location?.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }
+
+  get totalPollsCount(): number {
+    return this.polls.length;
+  }
+
+  get activePollsCount(): number {
+    return this.polls.filter(p => p.status === 'active').length;
+  }
+
+  get scheduledPollsCount(): number {
+    return this.polls.filter(p => p.status === 'scheduled').length;
+  }
+
+  get totalVotesCount(): number {
+    return this.polls.reduce((sum, p) => sum + (p.total_votes || 0), 0);
+  }
+
   createPoll(): void {
     this.router.navigate(['/official/polls/create']);
   }
@@ -133,10 +179,12 @@ export class OfficialPolls implements OnInit {
       next: (updated) => {
         poll.status = updated.status;
         this.successMessage = `Poll status updated to ${updated.status}.`;
-        setTimeout(() => this.successMessage = '', 3000);
+        setTimeout(() => this.successMessage = '', 3500);
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.errorMessage = err.error?.detail?.message || err.error?.detail || 'Failed to update poll status.';
+        this.cdr.detectChanges();
       }
     });
   }
@@ -160,18 +208,20 @@ export class OfficialPolls implements OnInit {
         this.deleteConfirmId = null;
         this.successMessage = 'Poll deleted successfully.';
         this.polls = this.polls.filter(p => p.id !== id);
-        setTimeout(() => this.successMessage = '', 3000);
+        setTimeout(() => this.successMessage = '', 3500);
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.deleting = false;
         this.deleteConfirmId = null;
         this.errorMessage = err.error?.detail?.message || err.error?.detail || 'Failed to delete poll.';
+        this.cdr.detectChanges();
       }
     });
   }
 
   formatDate(dateStr: string): string {
-    if (!dateStr) return '';
+    if (!dateStr) return 'N/A';
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
@@ -185,7 +235,7 @@ export class OfficialPolls implements OnInit {
     }
   }
 
-  // Sidebar Layout Methods
+  // Sidebar Layout Handlers
   toggleSidebarCollapse(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
   }
@@ -218,4 +268,3 @@ export class OfficialPolls implements OnInit {
     });
   }
 }
-

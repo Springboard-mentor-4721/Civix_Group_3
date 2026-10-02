@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import {
@@ -36,7 +36,8 @@ export class PollResults implements OnInit, OnDestroy {
   logoutConfirmOpen: boolean = false;
   loggingOut: boolean = false;
 
-  palette: string[] = ['#0d9488', '#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#14b8a6'];
+  // Executive Warm Palette: Amber, Purple, Rose, Gold, Indigo (NO Blue/Green)
+  palette: string[] = ['#d97706', '#8b5cf6', '#ec4899', '#f59e0b', '#7c3aed', '#e11d48', '#d946ef', '#6366f1'];
 
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -44,7 +45,9 @@ export class PollResults implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private pollsService: PollsService,
-    private authService: Auth
+    private authService: Auth,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -58,32 +61,36 @@ export class PollResults implements OnInit, OnDestroy {
     this.authService.getMe().subscribe({
       next: (user) => {
         if (user) {
-          this.userName = user.name || 'Official';
-          this.userRole = user.role || 'official';
-          this.userDepartment = user.department || 'Municipal Administration';
-          this.userProfilePic = user.profile_picture_url || null;
+          this.ngZone.run(() => {
+            this.userName = user.name || 'Official';
+            this.userRole = user.role || 'official';
+            this.userDepartment = user.department || 'Municipal Administration';
+            this.userProfilePic = user.profile_picture_url || null;
+            this.cdr.detectChanges();
+          });
         }
       },
       error: () => {}
     });
 
-    const idParam = this.route.snapshot.paramMap.get('id');
+    this.route.paramMap.subscribe(params => {
+      const idParam = params.get('id');
 
-    if (!idParam) {
-      this.router.navigate(['/official/polls']);
-      return;
-    }
+      if (!idParam) {
+        this.router.navigate(['/official/polls']);
+        return;
+      }
 
-    const parsedId = Number(idParam);
+      const parsedId = Number(idParam);
 
-    if (!Number.isInteger(parsedId) || parsedId <= 0) {
-      this.router.navigate(['/official/polls']);
-      return;
-    }
+      if (!Number.isInteger(parsedId) || parsedId <= 0) {
+        this.router.navigate(['/official/polls']);
+        return;
+      }
 
-    this.pollId = parsedId;
-
-    this.loadResults();
+      this.pollId = parsedId;
+      this.loadResults();
+    });
 
     // Auto refresh every 8 seconds
     this.refreshTimer = setInterval(() => {
@@ -105,56 +112,62 @@ export class PollResults implements OnInit, OnDestroy {
     if (!silent) {
       this.loading = true;
       this.errorMessage = '';
+      this.cdr.detectChanges();
     }
 
     this.pollsService.getPollResults(this.pollId).subscribe({
 
       next: (response: PollResultsResponse) => {
+        this.ngZone.run(() => {
+          console.log('POLL RESULTS API RESPONSE:', response);
 
-        console.log('POLL RESULTS API RESPONSE:', response);
+          if (!response) {
+            this.errorMessage = 'No poll results were returned by the server.';
+            this.loading = false;
+            this.cdr.detectChanges();
+            return;
+          }
 
-        if (!response) {
-          this.errorMessage = 'No poll results were returned by the server.';
+          // Normalize arrays so template never crashes.
+          response.options = Array.isArray(response.options)
+            ? response.options
+            : [];
+
+          response.voting_activity = Array.isArray(response.voting_activity)
+            ? response.voting_activity
+            : [];
+
+          this.results = response;
+
           this.loading = false;
-          return;
-        }
+          this.errorMessage = '';
 
-        // Normalize arrays so template never crashes.
-        response.options = Array.isArray(response.options)
-          ? response.options
-          : [];
-
-        response.voting_activity = Array.isArray(response.voting_activity)
-          ? response.voting_activity
-          : [];
-
-        this.results = response;
-
-        this.loading = false;
-        this.errorMessage = '';
-
-        console.log('POLL RESULTS SET:', this.results);
+          console.log('POLL RESULTS SET:', this.results);
+          this.cdr.detectChanges();
+        });
       },
 
       error: (error) => {
+        this.ngZone.run(() => {
+          console.error('POLL RESULTS API ERROR:', error);
 
-        console.error('POLL RESULTS API ERROR:', error);
+          this.loading = false;
 
-        this.loading = false;
+          const detail = error?.error?.detail;
 
-        const detail = error?.error?.detail;
-
-        if (typeof detail === 'object' && detail !== null) {
-          this.errorMessage =
-            detail.message ||
-            'Failed to load poll results.';
-        } else if (typeof detail === 'string') {
-          this.errorMessage = detail;
-        } else if (error?.message) {
-          this.errorMessage = error.message;
-        } else {
-          this.errorMessage = 'Failed to load poll results.';
-        }
+          if (typeof detail === 'object' && detail !== null) {
+            this.errorMessage =
+              detail.message ||
+              'Failed to load poll results.';
+          } else if (typeof detail === 'string') {
+            this.errorMessage = detail;
+          } else if (error?.message) {
+            this.errorMessage = error.message;
+          } else {
+            this.errorMessage = 'Failed to load poll results.';
+          }
+          this.cdr.detectChanges();
+        });
       }
     });
   }

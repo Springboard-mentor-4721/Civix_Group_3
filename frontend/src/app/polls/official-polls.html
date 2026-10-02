@@ -6,7 +6,7 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <span class="mobile-brand" style="display:inline-flex;align-items:center;gap:10px;">
-      <img src="/LOGO.png" alt="CIVIX" style="height:36px;width:auto;object-fit:contain;" />
+      <img src="/LOGO.png" alt="CIVIX" style="height:34px;width:auto;object-fit:contain;" />
       <span>CIVIX <span class="official-tag">Official</span></span>
     </span>
     <div class="mobile-avatar">
@@ -24,7 +24,7 @@
         <img src="/LOGO.png" alt="CIVIX Logo" class="sb-logo-img" />
         <div class="sb-brand-text" *ngIf="!sidebarCollapsed">
           <span class="sb-brand-title">CIVIX</span>
-          <span class="sb-brand-slogan" style="color:#b45309;">Official Portal</span>
+          <span class="sb-brand-slogan">Official Portal</span>
         </div>
       </div>
       <button class="sb-humber-btn" (click)="toggleSidebarCollapse()" title="Toggle Sidebar">
@@ -35,33 +35,20 @@
       <button class="sb-close" (click)="toggleMobileSidebar()">&times;</button>
     </div>
 
-    <!-- Mini User Badge -->
-    <div class="sb-mini-user" [title]="userName + ' (' + userDepartment + ')'">
-      <div class="sb-mini-avatar">
-        <img *ngIf="userProfilePic" [src]="userProfilePic" alt="Avatar" />
-        <span *ngIf="!userProfilePic">{{ userName.charAt(0).toUpperCase() }}</span>
-      </div>
-      <div class="sb-mini-info" *ngIf="!sidebarCollapsed">
-        <span class="sb-mini-name">{{ userName }}</span>
-        <span class="sb-mini-role">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          {{ userDepartment }}
-        </span>
-      </div>
-    </div>
+
 
     <!-- Navigation Menu -->
     <nav class="sb-nav">
-      <div class="sb-section-label" *ngIf="!sidebarCollapsed">Overview</div>
+      <div class="sb-section-label" *ngIf="!sidebarCollapsed">Navigation</div>
       <a class="sb-link" routerLink="/official/dashboard" title="Dashboard Overview">
         <div class="sb-icon-wrap">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
         </div>
-        <span class="sb-link-name" *ngIf="!sidebarCollapsed">Dashboard</span>
+        <span class="sb-link-name" *ngIf="!sidebarCollapsed">Overview</span>
       </a>
 
       <div class="sb-section-label" *ngIf="!sidebarCollapsed">Department Work</div>
-      <a class="sb-link" routerLink="/official/dashboard" [queryParams]="{tab: 'petitions'}" title="Petition Review">
+      <a class="sb-link" routerLink="/official/petitions" title="Petition Review">
         <div class="sb-icon-wrap">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         </div>
@@ -75,8 +62,15 @@
         <span class="sb-link-name" *ngIf="!sidebarCollapsed">Poll Management</span>
       </a>
 
-      <div class="sb-section-label" *ngIf="!sidebarCollapsed">Account & Settings</div>
-      <a class="sb-link" routerLink="/official/dashboard" [queryParams]="{tab: 'settings'}" title="Settings">
+      <a class="sb-link" routerLink="/official/reports" title="Reports &amp; Analytics">
+        <div class="sb-icon-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+        </div>
+        <span class="sb-link-name" *ngIf="!sidebarCollapsed">Reports &amp; Analytics</span>
+      </a>
+
+      <div class="sb-section-label" *ngIf="!sidebarCollapsed">Administration</div>
+      <a class="sb-link" routerLink="/official/settings" title="Settings">
         <div class="sb-icon-wrap">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l-.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </div>
@@ -101,168 +95,191 @@
     <!-- Top Bar -->
     <header class="top-bar">
       <div class="top-bar-left">
-        <h1 class="page-title">Official Poll Management</h1>
+        <h1 class="page-title">Poll Management</h1>
+        <!-- <p class="page-subtitle">Publish, track, and analyze civic opinion polls across your jurisdiction</p> -->
       </div>
       <div class="top-bar-right">
+        <button class="btn-create-poll-top" (click)="createPoll()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Create New Poll
+        </button>
         <div class="official-badge">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           {{ userDepartment }}
         </div>
-        <div class="tb-user-name">{{ userName }}</div>
+        <!-- <div class="tb-avatar">
+          <img *ngIf="userProfilePic" [src]="userProfilePic" alt="avatar" />
+          <span *ngIf="!userProfilePic">{{ userName.charAt(0).toUpperCase() }}</span>
+        </div> -->
       </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="main-content">
-      <div class="mgmt-container">
+    <!-- Content Container -->
+    <div class="page-content">
 
-        <!-- Header -->
-        <div class="mgmt-header">
-          <div>
-            <h1 class="mgmt-title">Municipal Poll Management</h1>
-            <p class="mgmt-subtitle">Create, monitor, edit, and publish civic polls for residents in your jurisdiction.</p>
-          </div>
-          <button class="btn-create-poll" (click)="createPoll()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            + Create New Poll
-          </button>
-        </div>
+      
 
-        <!-- Filter Tabs -->
-        <div class="tab-bar">
-          <button class="tab-btn" [class.active]="activeTab === 'all'" (click)="setTab('all')">All Polls</button>
-          <button class="tab-btn" [class.active]="activeTab === 'mine'" (click)="setTab('mine')">Created By Me</button>
-          <button class="tab-btn" [class.active]="activeTab === 'active'" (click)="setTab('active')">Active</button>
-          <button class="tab-btn" [class.active]="activeTab === 'scheduled'" (click)="setTab('scheduled')">Scheduled</button>
-          <button class="tab-btn" [class.active]="activeTab === 'closed'" (click)="setTab('closed')">Closed</button>
-        </div>
-
-        <!-- Banners -->
-        <div class="success-banner" *ngIf="successMessage">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          <span>{{ successMessage }}</span>
-        </div>
-
-        <div class="error-banner" *ngIf="errorMessage">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <span>{{ errorMessage }}</span>
-        </div>
-
-        <!-- Loading State -->
-        <div class="state-box" *ngIf="loading">
-          <div class="spinner"></div>
-          <p>Loading polls...</p>
-        </div>
-
-        <!-- Empty State -->
-        <div class="empty-box" *ngIf="!loading && polls.length === 0">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          <h3>No Polls Found</h3>
-          <p>No civic polls found for this filter tab.</p>
-          <button class="btn-create-poll" (click)="createPoll()" style="margin-top:12px;">Create Your First Poll</button>
-        </div>
-
-        <!-- Table View -->
-        <div class="table-card" *ngIf="!loading && polls.length > 0">
-          <table class="polls-table">
-            <thead>
-              <tr>
-                <th>Poll Details</th>
-                <th>Category</th>
-                <th>Location</th>
-                <th>Schedule</th>
-                <th>Status</th>
-                <th>Votes</th>
-                <th style="text-align:right;">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let poll of polls">
-
-                <!-- Details -->
-                <td>
-                  <div class="tbl-poll-title">{{ poll.title }}</div>
-                  <div class="tbl-poll-question">{{ poll.question }}</div>
-                  <span class="petition-tag" *ngIf="poll.petition_id" style="display:inline-block;margin-top:4px;">
-                    📌 Petition #{{ poll.petition_id }}
-                  </span>
-                </td>
-
-                <!-- Category -->
-                <td><span class="cat-pill">{{ poll.category }}</span></td>
-
-                <!-- Location -->
-                <td><span class="loc-text">{{ poll.location }}</span></td>
-
-                <!-- Schedule -->
-                <td>
-                  <div class="tbl-dates">
-                    <span>{{ formatDate(poll.start_at) }}</span>
-                    <span class="d-to">&rarr; {{ formatDate(poll.end_at) }}</span>
-                  </div>
-                </td>
-
-                <!-- Status -->
-                <td>
-                  <span class="status-pill" [ngClass]="getStatusClass(poll.status)">
-                    <span class="status-dot"></span>
-                    {{ poll.status | titlecase }}
-                  </span>
-                </td>
-
-                <!-- Votes -->
-                <td><strong class="votes-num">{{ poll.total_votes }}</strong></td>
-
-                <!-- Actions -->
-                <td style="text-align:right;">
-                  <div class="tbl-actions">
-                    <button class="btn-action primary" (click)="viewResults(poll.id)" title="View Results & Analytics">
-                      Results
-                    </button>
-                    <button class="btn-action" (click)="editPoll(poll.id)" title="Edit Poll">
-                      Edit
-                    </button>
-                    <button class="btn-action warning" (click)="toggleStatus(poll)" title="Toggle Status">
-                      {{ poll.status === 'active' ? 'Close' : 'Activate' }}
-                    </button>
-                    <button class="btn-action danger" (click)="confirmDelete(poll.id)" title="Delete Poll">
-                      Delete
-                    </button>
-                  </div>
-                </td>
-
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
+      <!-- Notification Banners -->
+      <div class="alert-banner success" *ngIf="successMessage">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>{{ successMessage }}</span>
       </div>
-    </main>
+      <div class="alert-banner error" *ngIf="errorMessage">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>{{ errorMessage }}</span>
+      </div>
 
+      <!-- Controls Panel: Status Tabs & Search Filters -->
+      <div class="controls-panel">
+        <div class="status-tab-pills">
+          <button class="pill-tab" [class.active]="activeTab === 'all'" (click)="setTab('all')">All Polls</button>
+          <button class="pill-tab" [class.active]="activeTab === 'mine'" (click)="setTab('mine')">Created By Me</button>
+          <button class="pill-tab" [class.active]="activeTab === 'active'" (click)="setTab('active')">Active</button>
+          <button class="pill-tab" [class.active]="activeTab === 'scheduled'" (click)="setTab('scheduled')">Scheduled</button>
+          <button class="pill-tab" [class.active]="activeTab === 'closed'" (click)="setTab('closed')">Closed</button>
+        </div>
+
+        <div class="filter-controls">
+          <div class="search-box-wrap">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" [(ngModel)]="searchQuery" placeholder="Search by title, question, location..." class="search-input" />
+          </div>
+
+          <!-- <select [(ngModel)]="categoryFilter" class="category-select">
+            <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+          </select> -->
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-state" *ngIf="loading">
+        <div class="app-spinner"></div>
+        <span>Retrieving municipal polls...</span>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state-card" *ngIf="!loading && filteredPolls.length === 0">
+        <div class="empty-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+        </div>
+        <h3>No Polls Found</h3>
+        <p>No civic polls matching your criteria were found in your jurisdiction.</p>
+        <button class="btn-create-poll-mid" (click)="createPoll()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Create New Poll
+        </button>
+      </div>
+
+      <!-- Polls Table Card View -->
+      <div class="polls-table-card" *ngIf="!loading && filteredPolls.length > 0">
+        <table class="custom-data-table">
+          <thead>
+            <tr>
+              <th>Poll Information</th>
+              <th>Category</th>
+              <th>Location</th>
+              <th>Schedule</th>
+              <th>Status</th>
+              <th>Total Votes</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let poll of filteredPolls" class="poll-row">
+              <td>
+                <div class="poll-main-cell">
+                  <div class="poll-title-text">{{ poll.title }}</div>
+                  <div class="poll-question-text">{{ poll.question }}</div>
+                  <div class="poll-badge-row" *ngIf="poll.petition_id">
+                    <span class="linked-petition-badge">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                      Linked to Petition #{{ poll.petition_id }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="category-tag-pill">{{ poll.category || 'General' }}</span>
+              </td>
+              <td>
+                <span class="location-text">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {{ poll.location || 'All Constituencies' }}
+                </span>
+              </td>
+              <td>
+                <div class="schedule-date-stack">
+                  <span class="date-item">?? {{ formatDate(poll.start_at) }}</span>
+                  <span class="date-arrow">? to</span>
+                  <span class="date-item">?? {{ formatDate(poll.end_at) }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="status-badge-pill" [ngClass]="getStatusClass(poll.status)">
+                  <span class="status-dot"></span>
+                  {{ poll.status | titlecase }}
+                </span>
+              </td>
+              <td>
+                <div class="vote-count-cell">
+                  <span class="vote-number">{{ poll.total_votes | number }}</span>
+                  <span class="vote-label">votes</span>
+                </div>
+              </td>
+              <td>
+                <div class="action-buttons-group">
+                  <button class="btn-act results" (click)="viewResults(poll.id)" title="View Analytics & Results">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    <span>Results</span>
+                  </button>
+                  <button class="btn-act edit" (click)="editPoll(poll.id)" title="Edit Poll Details">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    <span>Edit</span>
+                  </button>
+                  <button class="btn-act toggle" (click)="toggleStatus(poll)" [title]="poll.status === 'active' ? 'Close Poll' : 'Activate Poll'">
+                    <span>{{ poll.status === 'active' ? 'Close' : 'Activate' }}</span>
+                  </button>
+                  <button class="btn-act delete" (click)="confirmDelete(poll.id)" title="Delete Poll">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
   </div>
 
-  <!-- Delete Modal -->
-  <div class="modal-backdrop" *ngIf="deleteConfirmId">
-    <div class="modal-card">
-      <h3>Delete Poll</h3>
-      <p>Are you sure you want to delete this poll? All recorded votes will be permanently removed.</p>
-      <div class="modal-actions">
+  <!-- Delete Confirm Modal -->
+  <div class="custom-modal-backdrop" *ngIf="deleteConfirmId">
+    <div class="custom-modal-card">
+      <div class="modal-danger-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </div>
+      <h3 class="modal-title">Delete Civic Poll?</h3>
+      <p class="modal-description">Are you sure you want to delete this poll? All recorded citizen votes and demographic distributions will be permanently removed.</p>
+      <div class="modal-actions-row">
         <button class="btn-modal-cancel" (click)="cancelDelete()">Cancel</button>
         <button class="btn-modal-danger" (click)="executeDelete()" [disabled]="deleting">
-          {{ deleting ? 'Deleting...' : 'Delete Poll' }}
+          {{ deleting ? 'Deleting Poll...' : 'Yes, Delete Poll' }}
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Logout Confirmation Modal -->
-  <div class="modal-backdrop" *ngIf="logoutConfirmOpen">
-    <div class="modal-card">
-      <h3>Sign Out of Official Portal?</h3>
-      <p>You will need to sign in again with your official credentials.</p>
-      <div class="modal-actions">
+  <!-- Sign Out Confirmation Modal -->
+  <div class="custom-modal-backdrop" *ngIf="logoutConfirmOpen">
+    <div class="custom-modal-card">
+      <div class="modal-warn-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </div>
+      <h3 class="modal-title">Sign Out of Official Portal?</h3>
+      <p class="modal-description">You will be logged out of your active official session. Any unsaved drafts may be lost.</p>
+      <div class="modal-actions-row">
         <button class="btn-modal-cancel" (click)="cancelLogout()">Cancel</button>
-        <button class="btn-modal-danger" (click)="confirmLogout()" [disabled]="loggingOut">
+        <button class="btn-modal-warn" (click)="confirmLogout()" [disabled]="loggingOut">
           {{ loggingOut ? 'Signing out...' : 'Sign Out' }}
         </button>
       </div>

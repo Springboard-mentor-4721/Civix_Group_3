@@ -73,3 +73,43 @@ def upload_base64_image(data_url: str, folder: str = "civix/profile_pictures") -
         "url": f"/uploads/profile_pictures/{filename}",
         "public_id": filename,
     }
+
+
+def save_file_to_cloudinary_or_local(file: UploadFile, folder: str = "official_documents", sub_dir: str = "verification_docs") -> dict:
+    content = file.file.read()
+    file_size = len(content)
+    file_type = file.content_type or "application/octet-stream"
+
+    if _cloudinary_available:
+        try:
+            import cloudinary.uploader
+            res = cloudinary.uploader.upload(
+                content,
+                folder=f"civix/{folder}",
+                resource_type="auto",
+                unique_filename=True,
+            )
+            return {
+                "url": res.get("secure_url") or res.get("url"),
+                "public_id": res.get("public_id"),
+                "type": file_type,
+                "size": file_size,
+            }
+        except Exception as e:
+            print(f"Cloudinary upload failed: {e}. Using local storage.")
+
+    # Local storage fallback
+    upload_dir = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", sub_dir)
+    os.makedirs(upload_dir, exist_ok=True)
+    ext = os.path.splitext(file.filename or "")[1] or ".bin"
+    filename = f"doc_{secrets.token_hex(10)}{ext}"
+    filepath = os.path.join(upload_dir, filename)
+    with open(filepath, "wb") as f:
+        f.write(content)
+
+    return {
+        "url": f"/uploads/{sub_dir}/{filename}",
+        "public_id": filename,
+        "type": file_type,
+        "size": file_size,
+    }

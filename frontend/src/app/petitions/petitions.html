@@ -644,8 +644,8 @@
         <div class="pdetail-card" *ngIf="selectedPetition.photos && selectedPetition.photos.length > 0">
           <h3>Complaint Evidence Photos ({{ selectedPetition.photos.length }})</h3>
           <div class="pdetail-photos-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:12px; margin-top:12px;">
-            <div *ngFor="let photo of selectedPetition.photos" class="pdetail-photo-item" (click)="openPhotoZoom(photo.url, $event)" title="Click to view large image" style="aspect-ratio:4/3; border-radius:10px; overflow:hidden; border:1px solid #cbd5e1; background:#f8fafc; cursor:pointer; position:relative;">
-              <img [src]="photo.url" style="width:100%; height:100%; object-fit:cover; transition:transform 0.2s ease;" class="pdetail-photo-img" />
+            <div *ngFor="let photo of selectedPetition.photos" class="pdetail-photo-item" (click)="openPhotoZoom($any(photo).url || photo, $event)" title="Click to view large image" style="aspect-ratio:4/3; border-radius:10px; overflow:hidden; border:1px solid #cbd5e1; background:#f8fafc; cursor:pointer; position:relative;">
+              <img [src]="$any(photo).url || photo" style="width:100%; height:100%; object-fit:cover; transition:transform 0.2s ease;" class="pdetail-photo-img" />
               <div class="photo-zoom-hint">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
               </div>

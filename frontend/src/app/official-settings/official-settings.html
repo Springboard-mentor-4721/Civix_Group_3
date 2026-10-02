@@ -1,0 +1,465 @@
+<div class="app-layout">
+
+  <!-- Mobile Header -->
+  <header class="mobile-header">
+    <button class="menu-toggle" (click)="mobileSidebarOpen = !mobileSidebarOpen" aria-label="Toggle menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="mobile-brand">
+      <img src="/LOGO.png" alt="CIVIX" style="height:32px;width:auto;object-fit:contain;" />
+      <span>CIVIX <span class="official-tag">Official</span></span>
+    </div>
+    <div class="mobile-avatar">
+      <span *ngIf="!currentUser?.profile_picture_url">{{ currentUser?.name ? currentUser!.name.charAt(0).toUpperCase() : 'O' }}</span>
+      <img *ngIf="currentUser?.profile_picture_url" [src]="currentUser!.profile_picture_url" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+    </div>
+  </header>
+
+  <!-- Mobile Sidebar Backdrop -->
+  <div class="sidebar-backdrop" *ngIf="mobileSidebarOpen" (click)="mobileSidebarOpen = false"></div>
+
+  <!-- Persistent CIVIX Official Sidebar -->
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed" [class.mobile-open]="mobileSidebarOpen">
+    <div class="sb-brand-header">
+      <div class="sb-brand-info">
+        <img src="/LOGO.png" alt="CIVIX Logo" class="sb-logo-img" />
+        <div class="sb-brand-text" *ngIf="!sidebarCollapsed">
+          <span class="sb-brand-title">CIVIX</span>
+          <span class="sb-brand-slogan">OFFICIAL PORTAL</span>
+        </div>
+      </div>
+      <button class="sb-humber-btn" (click)="toggleSidebarCollapse()" title="Toggle Sidebar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <button class="sb-close" (click)="mobileSidebarOpen = false">&times;</button>
+    </div>
+
+
+
+    <!-- Navigation Menu -->
+    <nav class="sb-nav">
+      <div class="sb-section-label" *ngIf="!sidebarCollapsed">Navigation</div>
+
+      <a class="sb-link" routerLink="/official/dashboard" title="Dashboard Overview">
+        <div class="sb-icon-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </div>
+        <span class="sb-link-name" *ngIf="!sidebarCollapsed">Overview</span>
+      </a>
+
+      <div class="sb-section-label" *ngIf="!sidebarCollapsed">Department Work</div>
+
+      <a class="sb-link" routerLink="/official/petitions" title="Petition Review">
+        <div class="sb-icon-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <span class="sb-link-name" *ngIf="!sidebarCollapsed">Petition Review</span>
+      </a>
+
+      <a class="sb-link" routerLink="/official/polls" title="Poll Management">
+        <div class="sb-icon-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+        </div>
+        <span class="sb-link-name" *ngIf="!sidebarCollapsed">Poll Management</span>
+      </a>
+
+      <a class="sb-link" routerLink="/official/reports" title="Reports &amp; Analytics">
+        <div class="sb-icon-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+        </div>
+        <span class="sb-link-name" *ngIf="!sidebarCollapsed">Reports &amp; Analytics</span>
+      </a>
+
+      <div class="sb-section-label" *ngIf="!sidebarCollapsed">Administration</div>
+
+      <a class="sb-link active" routerLink="/official/settings" title="Settings">
+        <div class="sb-icon-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l-.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </div>
+        <span class="sb-link-name" *ngIf="!sidebarCollapsed">Settings</span>
+      </a>
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sb-footer">
+      <button class="sb-logout" (click)="promptLogout()" title="Sign Out">
+        <div class="sb-icon-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </div>
+        <span class="sb-link-name" *ngIf="!sidebarCollapsed">Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Area -->
+  <div class="main-area">
+
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <span class="page-title">Department Settings &amp; Preferences</span>
+      </div>
+      <div class="top-bar-right">
+        <div class="official-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          {{ currentUser?.department || 'Municipal Dept' }}
+        </div>
+        <div class="tb-user-name">{{ currentUser?.name || 'Official' }}</div>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="main-content settings-mode">
+
+      <div class="settings-view">
+
+        <!-- Top Fixed Tabs Bar -->
+        <div class="sv-top-fixed-bar">
+          <div class="sv-header">
+            <div class="sv-header-left">
+              <div class="sv-title-row">
+                <h2 class="sv-title">Department Settings &amp; Preferences</h2>
+                <span class="sv-role-badge">Verified Official Portal</span>
+              </div>
+              <p class="sv-subtitle">Manage municipal profile credentials, alert triggers, security protocols, and interface settings.</p>
+            </div>
+            <div class="sv-header-right">
+              <button class="ov-action-btn secondary" (click)="launchAppTour()" style="padding:6px 12px;font-size:12px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Launch Portal Tour
+              </button>
+            </div>
+          </div>
+
+          <!-- 5 Sub-Tabs Navigation -->
+          <div class="sv-nav-tabs">
+            <button class="sv-tab-btn" [class.active]="activeSettingsTab === 'profile'" (click)="setSettingsTab('profile')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Profile &amp; Identity
+            </button>
+            <button class="sv-tab-btn" [class.active]="activeSettingsTab === 'notifications'" (click)="setSettingsTab('notifications')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Notifications &amp; Dispatch
+            </button>
+            <button class="sv-tab-btn" [class.active]="activeSettingsTab === 'privacy'" (click)="setSettingsTab('privacy')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Privacy &amp; Security
+            </button>
+            <button class="sv-tab-btn" [class.active]="activeSettingsTab === 'appearance'" (click)="setSettingsTab('appearance')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+              Appearance &amp; Font
+            </button>
+            <button class="sv-tab-btn" [class.active]="activeSettingsTab === 'department'" (click)="setSettingsTab('department')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Department Routing
+            </button>
+          </div>
+        </div>
+
+        <!-- Scrollable Settings Body -->
+        <div class="sv-body">
+
+          <!-- TAB 1: Profile & Identity -->
+          <div *ngIf="activeSettingsTab === 'profile'" class="sv-section-panel">
+            <div class="sv-panel-header">
+              <div class="sv-ph-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <div>
+                <h3>Official Identity &amp; Municipal Credentials</h3>
+                <p>Verify official designation, department jurisdiction, and contact records registered on CIVIX.</p>
+              </div>
+            </div>
+
+            <div class="sv-form-grid">
+              <div class="sv-field">
+                <label>Official Full Name</label>
+                <input type="text" [value]="currentUser?.name || ''" readonly class="sv-disabled-input" />
+                <span class="sv-locked-tag">🔒 Admin Managed</span>
+              </div>
+
+              <div class="sv-field">
+                <label>Registered Government Email</label>
+                <input type="text" [value]="currentUser?.email || ''" readonly class="sv-disabled-input" />
+                <span class="sv-locked-tag">🔒 Verified Municipal Mail</span>
+              </div>
+
+              <div class="sv-field">
+                <label>Assigned Department</label>
+                <input type="text" [value]="currentUser?.department || 'Municipal Administration'" readonly class="sv-disabled-input" />
+              </div>
+
+              <div class="sv-field">
+                <label>Jurisdiction Constituency</label>
+                <input type="text" [value]="currentUser?.location || 'Central Constituency Ward'" readonly class="sv-disabled-input" />
+              </div>
+
+              <div class="sv-field full-width">
+                <label>Municipal Security Role</label>
+                <input type="text" value="Executive Official (Grade 1 Grievance Officer)" readonly class="sv-disabled-input" />
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: Notifications & Dispatch -->
+          <div *ngIf="activeSettingsTab === 'notifications'" class="sv-section-panel">
+            <div class="sv-panel-header">
+              <div class="sv-ph-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              </div>
+              <div>
+                <h3>Real-Time Grievance Dispatch &amp; Alerts</h3>
+                <p>Configure automated dispatch channels when new petitions reach signature thresholds.</p>
+              </div>
+            </div>
+
+            <div class="sv-switches-list">
+              <div class="sv-switch-row">
+                <div class="svr-text">
+                  <strong>Email Incident Dispatch</strong>
+                  <span>Receive immediate email notifications whenever urgent petitions are filed in your jurisdiction.</span>
+                </div>
+                <label class="setting-switch">
+                  <input type="checkbox" [(ngModel)]="settings.emailNotifs" (change)="onSettingChange()" />
+                  <span class="setting-slider"></span>
+                </label>
+              </div>
+
+              <div class="sv-switch-row">
+                <div class="svr-text">
+                  <strong>Threshold Reached Push Alerts</strong>
+                  <span>Alert when a grievance crosses 80% signature goal and requires mandatory council review.</span>
+                </div>
+                <label class="setting-switch">
+                  <input type="checkbox" [(ngModel)]="settings.petitionUpdates" (change)="onSettingChange()" />
+                  <span class="setting-slider"></span>
+                </label>
+              </div>
+
+              <div class="sv-switch-row">
+                <div class="svr-text">
+                  <strong>Emergency Infrastructure Warnings</strong>
+                  <span>Flash high-priority alerts for critical sanitation or public safety hazards reported by citizens.</span>
+                </div>
+                <label class="setting-switch">
+                  <input type="checkbox" [(ngModel)]="settings.emergencyAlerts" (change)="onSettingChange()" />
+                  <span class="setting-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: Privacy & Security (Danger Zone Included) -->
+          <div *ngIf="activeSettingsTab === 'privacy'" class="sv-section-panel">
+            <div class="sv-panel-header">
+              <div class="sv-ph-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <div>
+                <h3>Account Security, Recovery &amp; Danger Zone</h3>
+                <p>Self-serve password changes, reset token dispatch, credentials export, or account erasure.</p>
+              </div>
+            </div>
+
+            <!-- Password Reset Section -->
+            <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f1f5f9;">
+              <h4 style="font-size:14px;font-weight:800;color:#0f172a;margin:0;">Reset Password via Registered Email</h4>
+              <p style="font-size:12.5px;color:#64748b;margin:0;">Click below to send a secure password reset link directly to <strong>{{ currentUser?.email }}</strong>.</p>
+              
+              <button class="ov-action-btn secondary" (click)="sendPasswordReset()" style="align-self:flex-start;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                Send Password Reset Link
+              </button>
+            </div>
+
+            <!-- Change Password Form -->
+            <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f1f5f9;">
+              <h4 style="font-size:14px;font-weight:800;color:#0f172a;margin:0;">Direct Password Change</h4>
+              <div class="sv-form-grid">
+                <div class="sv-field">
+                  <label>Current Password</label>
+                  <input type="password" [(ngModel)]="pwdModel.current" placeholder="Enter current password" />
+                </div>
+                <div class="sv-field">
+                  <label>New Password</label>
+                  <input type="password" [(ngModel)]="pwdModel.newPwd" placeholder="Enter new password" />
+                </div>
+              </div>
+              <button class="ov-action-btn" (click)="submitChangePassword()" [disabled]="changingPassword || !pwdModel.newPwd" style="align-self:flex-start;margin-top:6px;">
+                {{ changingPassword ? 'Updating Password...' : 'Update Password' }}
+              </button>
+            </div>
+
+            <!-- Danger Zone Card -->
+            <div class="sv-danger-card">
+              <div class="sv-dc-header">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <div>
+                  <h4>Administrative Danger Zone</h4>
+                  <p>Actions here affect official portal access and municipal jurisdiction records.</p>
+                </div>
+              </div>
+
+              <div class="sv-danger-actions">
+                <button class="btn-danger-action" (click)="downloadData()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export Credentials Record (JSON)
+                </button>
+                <button class="btn-danger-action erase" (click)="requestAccountErasure()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  Request Official Account Deactivation
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- TAB 4: Appearance & Font -->
+          <div *ngIf="activeSettingsTab === 'appearance'" class="sv-section-panel">
+            <div class="sv-panel-header">
+              <div class="sv-ph-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+              </div>
+              <div>
+                <h3>Interface Accessibility &amp; Font Size</h3>
+                <p>Adjust root font sizing and high-contrast display parameters for municipal operation screens.</p>
+              </div>
+            </div>
+
+            <div class="sv-switches-list">
+              <div class="sv-switch-row">
+                <div class="svr-text">
+                  <strong>Font Scale Control</strong>
+                  <span>Current base font size: <strong>{{ settings.fontSize }}px</strong></span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <button class="ov-action-btn secondary" (click)="changeFontSize(-1)" style="padding:4px 10px;font-weight:900;">-</button>
+                  <span style="font-weight:800;font-size:13px;width:32px;text-align:center;">{{ settings.fontSize }}</span>
+                  <button class="ov-action-btn secondary" (click)="changeFontSize(1)" style="padding:4px 10px;font-weight:900;">+</button>
+                </div>
+              </div>
+
+              <div class="sv-switch-row">
+                <div class="svr-text">
+                  <strong>Fluid Interface Animations</strong>
+                  <span>Enable smooth CSS transitions and drawer slide animations.</span>
+                </div>
+                <label class="setting-switch">
+                  <input type="checkbox" [(ngModel)]="settings.animations" (change)="onSettingChange()" />
+                  <span class="setting-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 5: Department Routing -->
+          <div *ngIf="activeSettingsTab === 'department'" class="sv-section-panel">
+            <div class="sv-panel-header">
+              <div class="sv-ph-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div>
+                <h3>Departmental Grievance Routing Rules</h3>
+                <p>Configure automated petition assignment parameters across municipal engineering sectors.</p>
+              </div>
+            </div>
+
+            <div class="sv-switches-list">
+              <div class="sv-switch-row">
+                <div class="svr-text">
+                  <strong>Automatic Category Assignment</strong>
+                  <span>Directly route incoming infrastructure and sanitation grievances to your department queue.</span>
+                </div>
+                <label class="setting-switch">
+                  <input type="checkbox" [(ngModel)]="settings.autoAssignPetitions" (change)="onSettingChange()" />
+                  <span class="setting-slider"></span>
+                </label>
+              </div>
+
+              <div class="sv-info-card" style="margin-top:10px;">
+                <div class="sv-ic-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </div>
+                <div>
+                  <strong>Municipal Routing Note:</strong> Petitions filed by citizens are automatically sorted using NLP classification to match your registered department jurisdiction (<em>{{ currentUser?.department || 'Municipal Administration' }}</em>).
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- App Tour Modal -->
+<div class="app-tour-backdrop" *ngIf="showAppTour">
+  <div class="app-tour-card">
+    <div class="at-card-header">
+      <div class="at-icon-wrap" [innerHTML]="getSafeSvg(tourSteps[currentTourStepIndex].iconSvg)"></div>
+      <div class="at-header-text">
+        <span class="at-step-badge">{{ tourSteps[currentTourStepIndex].badge }}</span>
+        <h3 class="at-title">{{ tourSteps[currentTourStepIndex].title }}</h3>
+      </div>
+      <button class="at-close-btn" (click)="skipAppTour()">&times;</button>
+    </div>
+
+    <div class="at-card-body">
+      <div class="at-feature-box">
+        <div class="at-fb-item">
+          <span class="at-fb-label">Purpose</span>
+          <span class="at-fb-text">{{ tourSteps[currentTourStepIndex].purpose }}</span>
+        </div>
+        <div class="at-fb-item">
+          <span class="at-fb-label">Why Use This</span>
+          <span class="at-fb-text">{{ tourSteps[currentTourStepIndex].whyUse }}</span>
+        </div>
+      </div>
+      <p class="at-description">{{ tourSteps[currentTourStepIndex].description }}</p>
+    </div>
+
+    <div class="at-card-footer">
+      <div class="at-dots">
+        <span *ngFor="let s of tourSteps; let idx = index" 
+              class="at-progress-dot" 
+              [class.active]="idx === currentTourStepIndex"></span>
+      </div>
+      <div class="at-footer-actions">
+        <button class="btn-tour-skip" (click)="skipAppTour()">Skip Tour</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-tour-back" *ngIf="currentTourStepIndex > 0" (click)="prevTourStep()">Back</button>
+          <button class="btn-tour-next" (click)="nextTourStep()">
+            {{ currentTourStepIndex === tourSteps.length - 1 ? 'Finish Tour 🎉' : 'Next Step →' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div class="modal-backdrop" *ngIf="logoutConfirmOpen">
+  <div class="modal-card">
+    <h3>Sign Out Confirmation</h3>
+    <p>Are you sure you want to end your current municipal session?</p>
+    <div class="modal-actions">
+      <button class="ov-action-btn secondary" (click)="cancelLogout()">Cancel</button>
+      <button class="ov-action-btn danger" (click)="confirmLogout()" [disabled]="loggingOut">
+        {{ loggingOut ? 'Signing out...' : 'Sign Out' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container">
+  <div *ngFor="let t of toasts" class="toast toast-{{ t.type }}">
+    <span>{{ t.message }}</span>
+    <button (click)="dismissToast(t.id)">&times;</button>
+  </div>
+</div>

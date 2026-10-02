@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -62,7 +62,9 @@ export class PollForm implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private pollsService: PollsService,
-    private authService: Auth
+    private authService: Auth,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -76,29 +78,35 @@ export class PollForm implements OnInit {
     this.authService.getMe().subscribe({
       next: (user) => {
         if (user) {
-          this.userName = user.name || 'Official';
-          this.userRole = user.role || 'official';
-          this.userDepartment = user.department || 'Municipal Administration';
-          this.userProfilePic = user.profile_picture_url || null;
+          this.ngZone.run(() => {
+            this.userName = user.name || 'Official';
+            this.userRole = user.role || 'official';
+            this.userDepartment = user.department || 'Municipal Administration';
+            this.userProfilePic = user.profile_picture_url || null;
+            this.cdr.detectChanges();
+          });
         }
       },
       error: () => {}
     });
 
-    const idParam = this.route.snapshot.paramMap.get('id');
-    if (idParam && !isNaN(Number(idParam))) {
-      this.isEditMode = true;
-      this.pollId = Number(idParam);
-      this.loadPollData(this.pollId);
-    } else {
-      // Default dates (Start: now, End: 7 days from now)
-      const now = new Date();
-      const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-      this.startAt = this.formatDatetimeLocal(now);
-      this.endAt = this.formatDatetimeLocal(nextWeek);
+    this.route.paramMap.subscribe((params) => {
+      const idParam = params.get('id');
+      if (idParam && !isNaN(Number(idParam))) {
+        this.isEditMode = true;
+        this.pollId = Number(idParam);
+        this.loadPollData(this.pollId);
+      } else {
+        // Default dates (Start: now, End: 7 days from now)
+        const now = new Date();
+        const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        this.startAt = this.formatDatetimeLocal(now);
+        this.endAt = this.formatDatetimeLocal(nextWeek);
+      }
+    });
 
-      // Check for petition pre-fill parameters
-      this.route.queryParams.subscribe((params) => {
+    this.route.queryParams.subscribe((params) => {
+      this.ngZone.run(() => {
         if (params['petition_id'] && !isNaN(Number(params['petition_id']))) {
           this.petitionId = Number(params['petition_id']);
           const rawTitle = params['title'] || '';
@@ -112,38 +120,46 @@ export class PollForm implements OnInit {
           if (params['category']) this.category = params['category'];
           if (params['location']) this.location = params['location'];
         }
+        this.cdr.detectChanges();
       });
-    }
+    });
   }
 
   loadPollData(id: number): void {
     this.loading = true;
+    this.cdr.detectChanges();
     this.pollsService.getPollDetail(id).subscribe({
       next: (poll) => {
-        this.loading = false;
-        this.title = poll.title;
-        this.question = poll.question;
-        this.description = poll.description || '';
-        this.category = poll.category;
-        this.location = poll.location;
-        this.startAt = this.formatDatetimeLocal(new Date(poll.start_at));
-        this.endAt = this.formatDatetimeLocal(new Date(poll.end_at));
-        this.existingTotalVotes = poll.total_votes;
+        this.ngZone.run(() => {
+          this.loading = false;
+          this.title = poll.title;
+          this.question = poll.question;
+          this.description = poll.description || '';
+          this.category = poll.category;
+          this.location = poll.location;
+          if (poll.start_at) this.startAt = this.formatDatetimeLocal(new Date(poll.start_at));
+          if (poll.end_at) this.endAt = this.formatDatetimeLocal(new Date(poll.end_at));
+          this.existingTotalVotes = poll.total_votes || 0;
 
-        if (poll.options && poll.options.length > 0) {
-          this.options = poll.options.map((o, idx) => ({
-            option_text: o.option_text,
-            display_order: o.display_order ?? idx
-          }));
-        }
+          if (poll.options && poll.options.length > 0) {
+            this.options = poll.options.map((o, idx) => ({
+              option_text: o.option_text,
+              display_order: o.display_order ?? idx
+            }));
+          }
 
-        if (this.existingTotalVotes > 0) {
-          this.optionsLocked = true;
-        }
+          if (this.existingTotalVotes > 0) {
+            this.optionsLocked = true;
+          }
+          this.cdr.detectChanges();
+        });
       },
       error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.detail?.message || err.error?.detail || 'Failed to load poll data.';
+        this.ngZone.run(() => {
+          this.loading = false;
+          this.errorMessage = err.error?.detail?.message || err.error?.detail || 'Failed to load poll data.';
+          this.cdr.detectChanges();
+        });
       }
     });
   }
@@ -224,6 +240,7 @@ export class PollForm implements OnInit {
     this.submitting = true;
     this.errorMessage = '';
     this.successMessage = '';
+    this.cdr.detectChanges();
 
     const isoStart = new Date(this.startAt).toISOString();
     const isoEnd = new Date(this.endAt).toISOString();
@@ -248,14 +265,20 @@ export class PollForm implements OnInit {
 
       this.pollsService.updatePoll(this.pollId, payload).subscribe({
         next: () => {
-          this.submitting = false;
-          this.successMessage = 'Poll updated successfully!';
-          setTimeout(() => this.router.navigate(['/official/polls']), 1200);
+          this.ngZone.run(() => {
+            this.submitting = false;
+            this.successMessage = 'Poll updated successfully!';
+            this.cdr.detectChanges();
+            setTimeout(() => this.router.navigate(['/official/polls']), 1200);
+          });
         },
         error: (err) => {
-          this.submitting = false;
-          const detail = err.error?.detail;
-          this.errorMessage = (typeof detail === 'object' ? detail?.message : detail) || 'Failed to update poll.';
+          this.ngZone.run(() => {
+            this.submitting = false;
+            const detail = err.error?.detail;
+            this.errorMessage = (typeof detail === 'object' ? detail?.message : detail) || 'Failed to update poll.';
+            this.cdr.detectChanges();
+          });
         }
       });
     } else {
@@ -276,14 +299,20 @@ export class PollForm implements OnInit {
 
       this.pollsService.createPoll(payload).subscribe({
         next: () => {
-          this.submitting = false;
-          this.successMessage = 'Poll created successfully!';
-          setTimeout(() => this.router.navigate(['/official/polls']), 1200);
+          this.ngZone.run(() => {
+            this.submitting = false;
+            this.successMessage = 'Poll created successfully!';
+            this.cdr.detectChanges();
+            setTimeout(() => this.router.navigate(['/official/polls']), 1200);
+          });
         },
         error: (err) => {
-          this.submitting = false;
-          const detail = err.error?.detail;
-          this.errorMessage = (typeof detail === 'object' ? detail?.message : detail) || 'Failed to create poll.';
+          this.ngZone.run(() => {
+            this.submitting = false;
+            const detail = err.error?.detail;
+            this.errorMessage = (typeof detail === 'object' ? detail?.message : detail) || 'Failed to create poll.';
+            this.cdr.detectChanges();
+          });
         }
       });
     }

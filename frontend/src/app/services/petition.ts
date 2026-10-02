@@ -1,38 +1,40 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export type PetitionCategory =
-  | 'Environment'
   | 'Infrastructure'
-  | 'Education'
+  | 'Environment'
   | 'Public Safety'
   | 'Transportation'
+  | 'Education'
   | 'Healthcare'
-  | 'Housing';
+  | 'Housing'
+  | 'Other';
 
-export type PetitionStatus = 'active' | 'under_review' | 'in_progress' | 'resolved' | 'closed';
+export type PetitionStatus =
+  | 'active'
+  | 'under_review'
+  | 'in_progress'
+  | 'resolved'
+  | 'closed';
 
-export interface PetitionCreate {
-  title: string;
-  description: string;
-  category: PetitionCategory;
-  location: string;
-  signature_goal: number;
-  photos?: string[];
-}
-
-export interface PetitionUpdate {
-  title?: string;
-  description?: string;
-  category?: PetitionCategory;
-  location?: string;
-  signature_goal?: number;
-}
-
-export interface PetitionPhotoItem {
+export interface PetitionUser {
   id: number;
-  url: string;
+  name: string;
+  email: string;
+}
+
+export interface OfficialResponse {
+  id: number;
+  petition_id: number;
+  official_id: number;
+  official_name?: string;
+  response: string;
+  response_text?: string;
+  action_taken?: string;
+  created_at: string;
 }
 
 export interface PetitionResponse {
@@ -44,30 +46,13 @@ export interface PetitionResponse {
   status: PetitionStatus;
   signature_goal: number;
   signature_count: number;
-  creator_id: number;
-  creator_name?: string;
-  creator_profile_picture_url?: string | null;
+  creator_id?: number;
+  user?: PetitionUser;
   created_at: string;
   updated_at: string;
-  photos?: PetitionPhotoItem[];
-}
-
-export interface LinkedPollInfo {
-  id: number;
-  title: string;
-  question: string;
-  category: string;
-  location: string;
-  status: string;
-  total_votes: number;
-  has_voted: boolean;
-  voted_option_id?: number | null;
-  created_at: string;
-}
-
-export interface PetitionDetailResponse extends PetitionResponse {
-  has_signed: boolean;
-  poll?: LinkedPollInfo | null;
+  photos?: string[];
+  evidence_images?: string[];
+  official_responses?: OfficialResponse[];
 }
 
 export interface PetitionListResponse {
@@ -77,20 +62,36 @@ export interface PetitionListResponse {
   per_page: number;
 }
 
-export interface MyPetitionsResponse {
-  petitions: PetitionResponse[];
-  total: number;
-  active_count: number;
-  closed_count: number;
+export type SignedPetitionItem = PetitionResponse & { signed_at?: string };
+
+export interface PetitionDetailResponse extends PetitionResponse {
+  has_signed: boolean;
+  poll?: any;
+  evidence_photos?: string[];
+  image_url?: string;
 }
 
-export interface SignedPetitionItem extends PetitionResponse {
-  signed_at?: string;
+export interface PetitionCreate {
+  title: string;
+  description: string;
+  category: PetitionCategory;
+  location: string;
+  signature_goal?: number;
+  photos?: string[];
 }
 
-export interface SignedPetitionsResponse {
-  petitions: SignedPetitionItem[];
-  total: number;
+export interface PetitionUpdate {
+  title?: string;
+  description?: string;
+  category?: PetitionCategory;
+  location?: string;
+  signature_goal?: number;
+  status?: PetitionStatus;
+  photos?: string[];
+}
+
+export interface PetitionStatusUpdate {
+  status: PetitionStatus;
 }
 
 export interface SignatureResponse {
@@ -100,6 +101,18 @@ export interface SignatureResponse {
 
 export interface PetitionDeleteResponse {
   message: string;
+}
+
+export interface MyPetitionsResponse {
+  petitions: PetitionResponse[];
+  total: number;
+  active_count: number;
+  closed_count: number;
+}
+
+export interface SignedPetitionsResponse {
+  petitions: (PetitionResponse & { signed_at: string })[];
+  total: number;
 }
 
 export interface DashboardStats {
@@ -114,35 +127,60 @@ export interface DashboardStats {
   jurisdiction: string;
 }
 
-export interface OfficialResponse {
-  id: number;
-  petition_id: number;
-  official_id: number;
+export interface OfficialResponseCreate {
   response_text: string;
-  action_taken: string | null;
+  action_taken?: string;
+}
+
+export interface OfficialDirectoryItem {
+  id: number;
+  name: string;
+  department: string;
+  department_id: string;
+  location: string;
+  profile_picture_url?: string;
+}
+
+export interface OfficialUser {
+  id: number;
+  name: string;
+  email: string;
+  location: string | null;
+  organization: string | null;
+  department: string | null;
+  designation: string | null;
+  jurisdiction: string | null;
+  phone?: string | null;
+  verification_status: string;
+  document_url?: string | null;
+  notes?: string | null;
   created_at: string;
 }
 
-import { environment } from '../../environments/environment';
+export interface AuditLogEntry {
+  id: number;
+  actor_id: number;
+  actor_name: string;
+  action: string;
+  target_type: string | null;
+  target_id: number | null;
+  details: string | null;
+  created_at: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class PetitionService {
-  private readonly baseUrl = `${environment.apiUrl}/api/petitions`;
+  private baseUrl = `${environment.apiUrl}/api/petitions`;
+  private officialUrl = `${environment.apiUrl}/api/official`;
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * POST /api/petitions - Create a new petition
-   */
   createPetition(payload: PetitionCreate): Observable<PetitionResponse> {
     return this.http.post<PetitionResponse>(this.baseUrl, payload);
   }
 
-  /**
-   * GET /api/petitions - List petitions with optional query filters and pagination
-   */
   getPetitions(params?: {
     location?: string;
     category?: PetitionCategory;
@@ -161,83 +199,90 @@ export class PetitionService {
     return this.http.get<PetitionListResponse>(this.baseUrl, { params: httpParams });
   }
 
-  /**
-   * GET /api/petitions/mine - Get petitions created by the current user
-   */
   getMyPetitions(): Observable<MyPetitionsResponse> {
     return this.http.get<MyPetitionsResponse>(`${this.baseUrl}/mine`);
   }
 
-  /**
-   * GET /api/petitions/signed - Get petitions signed by the current user
-   */
   getSignedPetitions(): Observable<SignedPetitionsResponse> {
     return this.http.get<SignedPetitionsResponse>(`${this.baseUrl}/signed`);
   }
 
-  /**
-   * GET /api/petitions/{petition_id} - Get single petition detail with has_signed status
-   */
   getPetition(petitionId: number): Observable<PetitionDetailResponse> {
     return this.http.get<PetitionDetailResponse>(`${this.baseUrl}/${petitionId}`);
   }
 
-  /**
-   * PUT /api/petitions/{petition_id} - Update petition (creator only)
-   */
   updatePetition(petitionId: number, payload: PetitionUpdate): Observable<PetitionResponse> {
     return this.http.put<PetitionResponse>(`${this.baseUrl}/${petitionId}`, payload);
   }
 
-  /**
-   * PATCH /api/petitions/{petition_id}/status - Update petition status (officials only)
-   */
   updatePetitionStatus(petitionId: number, status: PetitionStatus): Observable<PetitionResponse> {
-    return this.http.patch<PetitionResponse>(`${this.baseUrl}/${petitionId}/status`, { status });
+    return this.http.patch<PetitionResponse>(`${this.officialUrl}/petitions/${petitionId}/status`, { status });
   }
 
-  /**
-   * DELETE /api/petitions/{petition_id} - Delete petition (creator only)
-   */
   deletePetition(petitionId: number): Observable<PetitionDeleteResponse> {
     return this.http.delete<PetitionDeleteResponse>(`${this.baseUrl}/${petitionId}`);
   }
 
-  /**
-   * POST /api/petitions/{petition_id}/sign - Sign a petition
-   */
   signPetition(petitionId: number): Observable<SignatureResponse> {
     return this.http.post<SignatureResponse>(`${this.baseUrl}/${petitionId}/sign`, {});
   }
 
-  /**
-   * GET /api/petitions/official/dashboard - Official dashboard stats
-   */
+  // ── Official portal ────────────────────────────────────────────────────────
+
   getOfficialDashboard(): Observable<DashboardStats> {
-    return this.http.get<DashboardStats>(`${this.baseUrl}/official/dashboard`);
+    return this.http.get<DashboardStats>(`${this.officialUrl}/dashboard`);
   }
 
-  /**
-   * GET /api/petitions/official/list - Petitions for official's department
-   */
   getOfficialPetitions(params?: {
     petition_status?: PetitionStatus;
+    category?: PetitionCategory;
     page?: number;
     per_page?: number;
   }): Observable<PetitionListResponse> {
     let httpParams = new HttpParams();
     if (params) {
       if (params.petition_status) httpParams = httpParams.set('petition_status', params.petition_status);
+      if (params.category) httpParams = httpParams.set('category', params.category);
       if (params.page) httpParams = httpParams.set('page', params.page.toString());
       if (params.per_page) httpParams = httpParams.set('per_page', params.per_page.toString());
     }
-    return this.http.get<PetitionListResponse>(`${this.baseUrl}/official/list`, { params: httpParams });
+    return this.http.get<PetitionListResponse>(`${this.officialUrl}/petitions`, { params: httpParams });
   }
 
-  /**
-   * POST /api/petitions/{petition_id}/respond - Add official response
-   */
   addOfficialResponse(petitionId: number, response_text: string, action_taken?: string): Observable<OfficialResponse> {
-    return this.http.post<OfficialResponse>(`${this.baseUrl}/${petitionId}/respond`, { response_text, action_taken });
+    return this.http.post<OfficialResponse>(
+      `${this.officialUrl}/petitions/${petitionId}/response`,
+      { response_text, action_taken }
+    );
+  }
+
+  getPendingOfficials(): Observable<OfficialUser[]> {
+    return this.http.get<OfficialUser[]>(`${this.officialUrl}/verifications/pending`);
+  }
+
+  getAllOfficials(): Observable<OfficialUser[]> {
+    return this.http.get<OfficialUser[]>(`${this.officialUrl}/verifications/all`);
+  }
+
+  reviewOfficial(userId: number, action: 'approve' | 'reject' | 'request_info', reason?: string): Observable<{ message: string; verification_status: string }> {
+    return this.http.patch<{ message: string; verification_status: string }>(
+      `${this.officialUrl}/verifications/${userId}`,
+      { action, reason }
+    );
+  }
+
+  getAuditLogs(page = 1, per_page = 50): Observable<{ logs: AuditLogEntry[]; total: number }> {
+    return this.http.get<{ logs: AuditLogEntry[]; total: number }>(
+      `${this.officialUrl}/audit-logs`,
+      { params: new HttpParams().set('page', page).set('per_page', per_page) }
+    );
+  }
+
+  getOfficialsDirectory(): Observable<OfficialDirectoryItem[]> {
+    return this.http.get<OfficialDirectoryItem[]>(`${this.officialUrl}/verifications/all`);
+  }
+
+  sendReportEmail(petitionId: number): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/${petitionId}/send-report-email`, {});
   }
 }

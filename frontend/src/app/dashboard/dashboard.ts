@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -7,6 +7,7 @@ import { Auth, UserResponse } from '../auth/auth';
 import { Petitions } from '../petitions/petitions';
 import { PollsList } from '../polls/polls-list';
 import { PetitionService, OfficialDirectoryItem } from '../services/petition';
+import { TranslationService, SupportedLanguage } from '../services/translation';
 
 export interface Toast {
   id: number;
@@ -18,7 +19,6 @@ export interface UserSettingsModel {
   // 1. Profile & Identity
   display_name: string;
   contact_phone: string;
-  bio_tagline: string;
   preferred_language: string;
 
   // 2. Notifications & Email Alerts
@@ -28,20 +28,14 @@ export interface UserSettingsModel {
   weekly_civic_digest: boolean;
   sound_effects: boolean;
 
-  // 3. Privacy & Security
-  profile_visibility: 'public' | 'locality_only' | 'private';
-  show_signed_petitions: boolean;
-  activity_status: boolean;
-  two_factor_auth: boolean;
-
-  // 4. Appearance & Preferences
+  // 3. Appearance & Preferences
   theme_mode: 'teal' | 'slate' | 'dark';
   font_size: 'small' | 'medium' | 'large';
   font_family: string;
   compact_card_view: boolean;
   ui_animations: boolean;
 
-  // 5. Locality & Municipal Sync
+  // 4. Locality & Municipal Sync
   locality_jurisdiction: string;
   auto_detect_location: boolean;
   emergency_broadcasts: boolean;
@@ -51,7 +45,6 @@ export interface UserSettingsModel {
 const DEFAULT_USER_SETTINGS: UserSettingsModel = {
   display_name: 'Civic Member',
   contact_phone: '+91 98765 43210',
-  bio_tagline: 'Passionate resident advocating for sustainable urban infrastructure and safer streets.',
   preferred_language: 'English',
 
   email_petition_updates: true,
@@ -59,11 +52,6 @@ const DEFAULT_USER_SETTINGS: UserSettingsModel = {
   push_notifications: true,
   weekly_civic_digest: false,
   sound_effects: true,
-
-  profile_visibility: 'public',
-  show_signed_petitions: true,
-  activity_status: true,
-  two_factor_auth: false,
 
   theme_mode: 'teal',
   font_size: 'medium',
@@ -120,8 +108,22 @@ export class Dashboard implements OnInit {
     private route: ActivatedRoute,
     private authService: Auth,
     private sanitizer: DomSanitizer,
-    private petitionService: PetitionService
+    private petitionService: PetitionService,
+    public ts: TranslationService,
+    private cdr: ChangeDetectorRef
   ) {}
+
+  t(key: string): string {
+    return this.ts.t(key);
+  }
+
+  onLanguageChange(selectedLang: string) {
+    if (selectedLang) {
+      this.ts.setLanguage(selectedLang as SupportedLanguage);
+      this.onSettingChange();
+      this.cdr.detectChanges();
+    }
+  }
 
   getSafeSvg(svgString: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(svgString);

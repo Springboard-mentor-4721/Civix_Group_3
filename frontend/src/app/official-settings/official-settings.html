@@ -139,22 +139,11 @@
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               Profile &amp; Identity
             </button>
-            <button class="sv-tab-btn" [class.active]="activeSettingsTab === 'notifications'" (click)="setSettingsTab('notifications')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-              Notifications &amp; Dispatch
-            </button>
             <button class="sv-tab-btn" [class.active]="activeSettingsTab === 'privacy'" (click)="setSettingsTab('privacy')">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               Privacy &amp; Security
             </button>
-            <button class="sv-tab-btn" [class.active]="activeSettingsTab === 'appearance'" (click)="setSettingsTab('appearance')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-              Appearance &amp; Font
-            </button>
-            <button class="sv-tab-btn" [class.active]="activeSettingsTab === 'department'" (click)="setSettingsTab('department')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              Department Routing
-            </button>
+            
           </div>
         </div>
 
@@ -203,54 +192,7 @@
             </div>
           </div>
 
-          <!-- TAB 2: Notifications & Dispatch -->
-          <div *ngIf="activeSettingsTab === 'notifications'" class="sv-section-panel">
-            <div class="sv-panel-header">
-              <div class="sv-ph-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-              </div>
-              <div>
-                <h3>Real-Time Grievance Dispatch &amp; Alerts</h3>
-                <p>Configure automated dispatch channels when new petitions reach signature thresholds.</p>
-              </div>
-            </div>
-
-            <div class="sv-switches-list">
-              <div class="sv-switch-row">
-                <div class="svr-text">
-                  <strong>Email Incident Dispatch</strong>
-                  <span>Receive immediate email notifications whenever urgent petitions are filed in your jurisdiction.</span>
-                </div>
-                <label class="setting-switch">
-                  <input type="checkbox" [(ngModel)]="settings.emailNotifs" (change)="onSettingChange()" />
-                  <span class="setting-slider"></span>
-                </label>
-              </div>
-
-              <div class="sv-switch-row">
-                <div class="svr-text">
-                  <strong>Threshold Reached Push Alerts</strong>
-                  <span>Alert when a grievance crosses 80% signature goal and requires mandatory council review.</span>
-                </div>
-                <label class="setting-switch">
-                  <input type="checkbox" [(ngModel)]="settings.petitionUpdates" (change)="onSettingChange()" />
-                  <span class="setting-slider"></span>
-                </label>
-              </div>
-
-              <div class="sv-switch-row">
-                <div class="svr-text">
-                  <strong>Emergency Infrastructure Warnings</strong>
-                  <span>Flash high-priority alerts for critical sanitation or public safety hazards reported by citizens.</span>
-                </div>
-                <label class="setting-switch">
-                  <input type="checkbox" [(ngModel)]="settings.emergencyAlerts" (change)="onSettingChange()" />
-                  <span class="setting-slider"></span>
-                </label>
-              </div>
-            </div>
-          </div>
-
+        
           <!-- TAB 3: Privacy & Security (Danger Zone Included) -->
           <div *ngIf="activeSettingsTab === 'privacy'" class="sv-section-panel">
             <div class="sv-panel-header">
@@ -275,7 +217,7 @@
             </div>
 
             <!-- Change Password Form -->
-            <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f1f5f9;">
+            <!-- <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f1f5f9;">
               <h4 style="font-size:14px;font-weight:800;color:#0f172a;margin:0;">Direct Password Change</h4>
               <div class="sv-form-grid">
                 <div class="sv-field">
@@ -290,7 +232,7 @@
               <button class="ov-action-btn" (click)="submitChangePassword()" [disabled]="changingPassword || !pwdModel.newPwd" style="align-self:flex-start;margin-top:6px;">
                 {{ changingPassword ? 'Updating Password...' : 'Update Password' }}
               </button>
-            </div>
+            </div> -->
 
             <!-- Danger Zone Card -->
             <div class="sv-danger-card">
@@ -316,81 +258,7 @@
 
           </div>
 
-          <!-- TAB 4: Appearance & Font -->
-          <div *ngIf="activeSettingsTab === 'appearance'" class="sv-section-panel">
-            <div class="sv-panel-header">
-              <div class="sv-ph-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-              </div>
-              <div>
-                <h3>Interface Accessibility &amp; Font Size</h3>
-                <p>Adjust root font sizing and high-contrast display parameters for municipal operation screens.</p>
-              </div>
-            </div>
-
-            <div class="sv-switches-list">
-              <div class="sv-switch-row">
-                <div class="svr-text">
-                  <strong>Font Scale Control</strong>
-                  <span>Current base font size: <strong>{{ settings.fontSize }}px</strong></span>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <button class="ov-action-btn secondary" (click)="changeFontSize(-1)" style="padding:4px 10px;font-weight:900;">-</button>
-                  <span style="font-weight:800;font-size:13px;width:32px;text-align:center;">{{ settings.fontSize }}</span>
-                  <button class="ov-action-btn secondary" (click)="changeFontSize(1)" style="padding:4px 10px;font-weight:900;">+</button>
-                </div>
-              </div>
-
-              <div class="sv-switch-row">
-                <div class="svr-text">
-                  <strong>Fluid Interface Animations</strong>
-                  <span>Enable smooth CSS transitions and drawer slide animations.</span>
-                </div>
-                <label class="setting-switch">
-                  <input type="checkbox" [(ngModel)]="settings.animations" (change)="onSettingChange()" />
-                  <span class="setting-slider"></span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 5: Department Routing -->
-          <div *ngIf="activeSettingsTab === 'department'" class="sv-section-panel">
-            <div class="sv-panel-header">
-              <div class="sv-ph-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              </div>
-              <div>
-                <h3>Departmental Grievance Routing Rules</h3>
-                <p>Configure automated petition assignment parameters across municipal engineering sectors.</p>
-              </div>
-            </div>
-
-            <div class="sv-switches-list">
-              <div class="sv-switch-row">
-                <div class="svr-text">
-                  <strong>Automatic Category Assignment</strong>
-                  <span>Directly route incoming infrastructure and sanitation grievances to your department queue.</span>
-                </div>
-                <label class="setting-switch">
-                  <input type="checkbox" [(ngModel)]="settings.autoAssignPetitions" (change)="onSettingChange()" />
-                  <span class="setting-slider"></span>
-                </label>
-              </div>
-
-              <div class="sv-info-card" style="margin-top:10px;">
-                <div class="sv-ic-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                </div>
-                <div>
-                  <strong>Municipal Routing Note:</strong> Petitions filed by citizens are automatically sorted using NLP classification to match your registered department jurisdiction (<em>{{ currentUser?.department || 'Municipal Administration' }}</em>).
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
-
       </div>
 
     </main>

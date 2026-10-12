@@ -158,6 +158,10 @@ export class Dashboard implements OnInit {
         this.activeNav = 'petitions';
       }
     });
+
+    // Proactively load both officials and analytics
+    this.loadOfficials();
+    this.loadAnalytics();
   }
 
   generateCalendar() {
@@ -261,6 +265,8 @@ export class Dashboard implements OnInit {
     const currentPath = this.router.url.split('?')[0].replace(/^\//, '');
     if (['petitions', 'polls', 'officials', 'analytics', 'settings'].includes(currentPath)) {
       this.activeNav = currentPath;
+      if (currentPath === 'officials') this.loadOfficials();
+      if (currentPath === 'analytics') this.loadAnalytics();
     } else {
       this.activeNav = 'petitions';
     }
@@ -571,18 +577,27 @@ export class Dashboard implements OnInit {
     if (!this.officialsSearch.trim()) return this.officials;
     const q = this.officialsSearch.toLowerCase();
     return this.officials.filter(o =>
-      o.name.toLowerCase().includes(q) ||
-      o.department.toLowerCase().includes(q) ||
-      o.location.toLowerCase().includes(q)
+      (o.name || '').toLowerCase().includes(q) ||
+      (o.department || '').toLowerCase().includes(q) ||
+      (o.location || '').toLowerCase().includes(q) ||
+      (o.department_id || '').toLowerCase().includes(q)
     );
   }
 
-  loadOfficials() {
-    if (this.officials.length) return;
+  loadOfficials(force: boolean = false) {
+    if (!force && this.officials.length > 0) return;
     this.officialsLoading = true;
     this.petitionService.getOfficialsDirectory().subscribe({
-      next: (list) => { this.officials = list; this.officialsLoading = false; },
-      error: () => { this.officialsLoading = false; }
+      next: (list) => {
+        this.officials = list || [];
+        this.officialsLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load officials directory:', err);
+        this.officialsLoading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -590,10 +605,25 @@ export class Dashboard implements OnInit {
   analyticsLoading = false;
   analyticsPetitions: any[] = [];
 
-  get analyticsTotal()   { return this.analyticsPetitions.length; }
-  get analyticsActive()  { return this.analyticsPetitions.filter(p => p.status === 'active').length; }
-  get analyticsReview()  { return this.analyticsPetitions.filter(p => p.status === 'under_review').length; }
-  get analyticsResolved(){ return this.analyticsPetitions.filter(p => p.status === 'resolved' || p.status === 'closed').length; }
+  get analyticsTotal()      { return this.analyticsPetitions.length; }
+  get analyticsActive()     { return this.analyticsPetitions.filter(p => p.status === 'active').length; }
+  get analyticsReview()     { return this.analyticsPetitions.filter(p => p.status === 'under_review').length; }
+  get analyticsInProgress() { return this.analyticsPetitions.filter(p => p.status === 'in_progress').length; }
+  get analyticsResolved()   { return this.analyticsPetitions.filter(p => p.status === 'resolved' || p.status === 'closed').length; }
+  get analyticsSignatures() { return this.analyticsPetitions.reduce((acc, p) => acc + (p.signature_count || 0), 0); }
+
+  get activePct(): number {
+    return this.analyticsTotal ? Math.round((this.analyticsActive / this.analyticsTotal) * 100) : 0;
+  }
+  get reviewPct(): number {
+    return this.analyticsTotal ? Math.round((this.analyticsReview / this.analyticsTotal) * 100) : 0;
+  }
+  get inProgressPct(): number {
+    return this.analyticsTotal ? Math.round((this.analyticsInProgress / this.analyticsTotal) * 100) : 0;
+  }
+  get resolvedPct(): number {
+    return this.analyticsTotal ? Math.round((this.analyticsResolved / this.analyticsTotal) * 100) : 0;
+  }
 
   get analyticsByCategory(): { key: string; count: number; pct: number }[] {
     const map: Record<string, number> = {};
@@ -617,12 +647,20 @@ export class Dashboard implements OnInit {
       .sort((a, b) => b.count - a.count);
   }
 
-  loadAnalytics() {
-    if (this.analyticsPetitions.length) return;
+  loadAnalytics(force: boolean = false) {
+    if (!force && this.analyticsPetitions.length > 0) return;
     this.analyticsLoading = true;
     this.petitionService.getPetitions({ page: 1, per_page: 100 }).subscribe({
-      next: (res) => { this.analyticsPetitions = res.petitions || []; this.analyticsLoading = false; },
-      error: () => { this.analyticsLoading = false; }
+      next: (res) => {
+        this.analyticsPetitions = res.petitions || [];
+        this.analyticsLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load analytics petitions:', err);
+        this.analyticsLoading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 

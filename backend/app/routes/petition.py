@@ -14,7 +14,7 @@ from app.schemas.petition import (
     DashboardStats, OfficialResponseCreate, OfficialResponseOut,
 )
 from app.routes.auth import get_current_user, require_official
-from app.models.user import User, UserRole
+from app.models.user import User, UserRole, VerificationStatus
 from app.utils.cloudinary_utils import upload_base64_image
 from app.utils.email import send_petition_notification_email, send_petition_report_email
 import threading
@@ -527,14 +527,23 @@ def officials_directory(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    officials = db.query(User).filter(User.role == UserRole.official, User.face_verified == True).all()
+    officials = (
+        db.query(User)
+        .filter(
+            User.role == UserRole.official,
+            User.verification_status != VerificationStatus.rejected
+        )
+        .order_by(User.name.asc())
+        .all()
+    )
     return [
         {
             "id": u.id,
-            "name": u.name,
+            "name": u.name or "Municipal Officer",
+            "email": u.email,
             "department": u.department or "Municipal Administration",
             "department_id": u.department_id or "",
-            "location": u.location or "",
+            "location": u.location or "Municipal Ward",
             "profile_picture_url": u.profile_picture_url,
         }
         for u in officials

@@ -2626,7 +2626,9 @@
 .av-blue   { border-left-color: #3b82f6; }
 .av-green  { border-left-color: #10b981; }
 .av-amber  { border-left-color: #f59e0b; }
+.av-indigo { border-left-color: #6366f1; }
 .av-teal   { border-left-color: #0d9488; }
+.av-purple { border-left-color: #8b5cf6; }
 
 .av-kpi-val {
   font-size: 28px;

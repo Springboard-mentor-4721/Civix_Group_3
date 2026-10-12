@@ -147,40 +147,40 @@
             <!-- Stats Overview Numbers -->
             <div class="lsc-metrics-grid">
               <div class="lsc-metric-item">
-                <span class="lsc-m-num text-amethyst">5</span>
-                <span class="lsc-m-label">Created</span>
+                <span class="lsc-m-num text-amethyst">{{ analyticsTotal }}</span>
+                <span class="lsc-m-label">Total</span>
               </div>
               <div class="lsc-metric-item">
-                <span class="lsc-m-num text-wisteria">4</span>
+                <span class="lsc-m-num text-wisteria">{{ analyticsActive }}</span>
                 <span class="lsc-m-label">Active</span>
               </div>
               <div class="lsc-metric-item">
-                <span class="lsc-m-num text-emerald">1</span>
-                <span class="lsc-m-label">Closed</span>
+                <span class="lsc-m-num text-emerald">{{ analyticsResolved }}</span>
+                <span class="lsc-m-label">Resolved</span>
               </div>
             </div>
 
             <!-- Stacked Status Bar Graph -->
             <div class="lsc-graph-section">
               <div class="lsc-bar-track">
-                <div class="lsc-bar-fill fill-active" style="width: 75%" title="75% Active"></div>
-                <div class="lsc-bar-fill fill-review" style="width: 15%" title="15% Under Review"></div>
-                <div class="lsc-bar-fill fill-closed" style="width: 10%" title="10% Closed"></div>
+                <div class="lsc-bar-fill fill-active" [style.width.%]="activePct" [title]="activePct + '% Active'"></div>
+                <div class="lsc-bar-fill fill-review" [style.width.%]="reviewPct" [title]="reviewPct + '% Under Review'"></div>
+                <div class="lsc-bar-fill fill-closed" [style.width.%]="resolvedPct" [title]="resolvedPct + '% Closed/Resolved'"></div>
               </div>
 
               <!-- Graph Legend Items -->
               <div class="lsc-legend">
                 <div class="lsc-leg-item">
                   <span class="leg-dot dot-active"></span>
-                  <span>Active (75%)</span>
+                  <span>Active ({{ activePct }}%)</span>
                 </div>
                 <div class="lsc-leg-item">
                   <span class="leg-dot dot-review"></span>
-                  <span>Review (15%)</span>
+                  <span>Review ({{ reviewPct }}%)</span>
                 </div>
                 <div class="lsc-leg-item">
                   <span class="leg-dot dot-closed"></span>
-                  <span>Resolved (10%)</span>
+                  <span>Resolved ({{ resolvedPct }}%)</span>
                 </div>
               </div>
             </div>
@@ -330,7 +330,6 @@
             </div>
           </div>
 
-          <!-- TAB 2: Notifications -->
           
 
           <!-- TAB 3: Privacy & Security -->
@@ -418,25 +417,18 @@
                 <span class="field-help">Applies font across the platform interface dynamically.</span>
               </div>
 
-              <div class="sv-field">
+              <!-- <div class="sv-field">
                 <label>Color Theme Palette</label>
                 <select [(ngModel)]="settings.theme_mode" (change)="onSettingChange()">
                   <option value="teal">Classic Civic Teal (Default)</option>
                   <option value="slate">Midnight Slate Theme</option>
                   <option value="dark">Deep Ocean Theme</option>
                 </select>
-              </div>
+              </div> -->
 
-              <div class="sv-field">
-                <label>Interface Text Scaling</label>
-                <select [(ngModel)]="settings.font_size" (change)="onSettingChange()">
-                  <option value="small">Compact (13px)</option>
-                  <option value="medium">Standard (14px)</option>
-                  <option value="large">Large & Accessible (16px)</option>
-                </select>
-              </div>
+             
 
-              <div class="sv-switch-row full-width">
+              <!-- <div class="sv-switch-row full-width">
                 <div class="svr-text">
                   <strong>Default Compact List View in Directory</strong>
                   <span>Open the petition directory in compact list row mode instead of grid cards.</span>
@@ -445,9 +437,9 @@
                   <input type="checkbox" [(ngModel)]="settings.compact_card_view" (change)="onSettingChange()" />
                   <span class="setting-slider"></span>
                 </label>
-              </div>
+              </div> -->
 
-              <div class="sv-switch-row full-width">
+              <!-- <div class="sv-switch-row full-width">
                 <div class="svr-text">
                   <strong>Enable Motion Transitions & Animations</strong>
                   <span>Play smooth micro-animations across cards, progress bars, and tabs.</span>
@@ -456,7 +448,7 @@
                   <input type="checkbox" [(ngModel)]="settings.ui_animations" (change)="onSettingChange()" />
                   <span class="setting-slider"></span>
                 </label>
-              </div>
+              </div> -->
             </div>
           </div>          
 
@@ -494,14 +486,14 @@
         <div class="officials-grid" *ngIf="!officialsLoading && filteredOfficials.length > 0">
           <div class="official-card" *ngFor="let o of filteredOfficials">
             <div class="oc-avatar">
-              <img *ngIf="o.profile_picture_url" [src]="o.profile_picture_url" [alt]="o.name" />
-              <span *ngIf="!o.profile_picture_url">{{ o.name.charAt(0).toUpperCase() }}</span>
+              <img *ngIf="o.profile_picture_url" [src]="o.profile_picture_url" [alt]="o.name || 'Official'" />
+              <span *ngIf="!o.profile_picture_url">{{ (o.name || 'Official').charAt(0).toUpperCase() }}</span>
             </div>
             <div class="oc-info">
-              <div class="oc-name">{{ o.name }}</div>
+              <div class="oc-name">{{ o.name || 'Municipal Officer' }}</div>
               <div class="oc-dept">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                {{ o.department }}
+                {{ o.department || 'Municipal Administration' }}
               </div>
               <div class="oc-loc" *ngIf="o.location">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -520,7 +512,7 @@
       <!-- ANALYTICS TAB -->
       <div class="analytics-view" *ngIf="activeNav === 'analytics'">
         <div class="av-header">
-          <h2 class="av-title">Civic Analytics</h2>
+          <h2 class="av-title">Civix Analytics</h2>
           <p class="av-sub">Petition activity and engagement insights for your locality.</p>
         </div>
 
@@ -543,9 +535,17 @@
               <div class="av-kpi-val">{{ analyticsReview }}</div>
               <div class="av-kpi-label">Under Review</div>
             </div>
+            <div class="av-kpi-card av-indigo">
+              <div class="av-kpi-val">{{ analyticsInProgress }}</div>
+              <div class="av-kpi-label">In Progress</div>
+            </div>
             <div class="av-kpi-card av-teal">
               <div class="av-kpi-val">{{ analyticsResolved }}</div>
               <div class="av-kpi-label">Resolved / Closed</div>
+            </div>
+            <div class="av-kpi-card av-purple">
+              <div class="av-kpi-val">{{ analyticsSignatures }}</div>
+              <div class="av-kpi-label">Total Signatures</div>
             </div>
           </div>
 

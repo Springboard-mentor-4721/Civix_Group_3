@@ -279,7 +279,7 @@ export class PetitionService {
   }
 
   getOfficialsDirectory(): Observable<OfficialDirectoryItem[]> {
-    return this.http.get<OfficialDirectoryItem[]>(`${this.officialUrl}/verifications/all`);
+    return this.http.get<OfficialDirectoryItem[]>(`${this.baseUrl}/officials/directory`);
   }
 
   sendReportEmail(petitionId: number): Observable<{ message: string }> {

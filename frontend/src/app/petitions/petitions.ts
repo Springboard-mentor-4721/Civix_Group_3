@@ -553,6 +553,90 @@ export class Petitions implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  onGalleryPhotosSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    this.cameraError = '';
+    const files = Array.from(input.files);
+
+    // Filter only images
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    if (imageFiles.length === 0) {
+      this.cameraError = 'Please select valid image files only.';
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    const availableSlots = 5 - this.capturedPhotos.length;
+    if (availableSlots <= 0) {
+      this.cameraError = 'Maximum 5 photos allowed.';
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    const filesToProcess = imageFiles.slice(0, availableSlots);
+    if (imageFiles.length > availableSlots) {
+      this.showToast(`Only ${availableSlots} more photo(s) could be added (max 5).`, 'info');
+    }
+
+    let processedCount = 0;
+    filesToProcess.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1600;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            if (this.capturedPhotos.length < 5) {
+              this.capturedPhotos.push(dataUrl);
+            }
+          } else {
+            if (this.capturedPhotos.length < 5) {
+              this.capturedPhotos.push(e.target.result);
+            }
+          }
+          processedCount++;
+          if (processedCount === filesToProcess.length) {
+            this.cdr.detectChanges();
+          }
+        };
+        img.onerror = () => {
+          processedCount++;
+          if (this.capturedPhotos.length < 5) {
+            this.capturedPhotos.push(e.target.result);
+          }
+          if (processedCount === filesToProcess.length) {
+            this.cdr.detectChanges();
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    input.value = '';
+  }
+
   stopCamera() {
     this.cameraStream?.getTracks().forEach(t => t.stop());
     this.cameraStream = null;
@@ -595,7 +679,7 @@ export class Petitions implements OnInit, OnDestroy {
     if (!this.formDescription.trim()) { this.formErrorMessage = 'Description is required.'; return; }
     if (!this.formLocation.trim()) { this.formErrorMessage = 'Location is required.'; return; }
     if (!this.formSignatureGoal || this.formSignatureGoal <= 0) { this.formErrorMessage = 'Signature goal must be at least 1.'; return; }
-    if (this.capturedPhotos.length < 3) { this.formErrorMessage = 'Please capture at least 3 photos using the camera.'; return; }
+    if (this.capturedPhotos.length < 3) { this.formErrorMessage = 'Please provide at least 3 photos (via camera or gallery upload).'; return; }
 
     this.formSubmitting = true;
     const payload: PetitionCreate = {
